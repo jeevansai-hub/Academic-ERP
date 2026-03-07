@@ -1,4 +1,9 @@
-# ECAP — VIIT Student Performance Portal
+![GitHub repo](https://img.shields.io/badge/ECAP-Vignan's%20IIT-blue)
+![Firebase](https://img.shields.io/badge/Firebase-Connected-orange)
+![React](https://img.shields.io/badge/React-18-61DAFB)
+
+# Academic-ERP
+ECAP – VIIT Student Performance Portal is a web-based Academic ERP that centralizes student performance data from tests, internals, and exams. It provides dashboards, analytics, and alerts for students, faculty, and administrators to track academic progress, identify risks early, and make data-driven decisions using a modern, responsive interface.
 
 PREREQUISITES:
 Node.js v18+, npm v9+, Firebase CLI v12+
