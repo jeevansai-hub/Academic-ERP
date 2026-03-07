@@ -1,0 +1,14 @@
+{
+  "name": "ecap-viit",
+  "version": "1.0.0",
+  "description": "ECAP — VIIT Student Performance Portal",
+  "scripts": {
+    "dev:frontend": "cd src && npm run dev",
+    "dev:functions": "cd functions && npm run serve",
+    "build": "cd src && npm run build && cd ../functions && npm run build"
+  },
+  "workspaces": [
+    "src",
+    "functions"
+  ]
+}

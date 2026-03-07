@@ -1,0 +1,35 @@
+# Environment variables — NEVER commit these
+.env
+.env.local
+.env.production
+functions/.env
+
+# Dependencies
+node_modules/
+functions/node_modules/
+src/node_modules/
+
+# Build outputs
+dist/
+build/
+functions/lib/
+
+# Firebase
+.firebase/
+firebase-debug.log
+firestore-debug.log
+
+# IDE files
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Service account keys — NEVER commit
+*serviceAccount*.json
+*service-account*.json
+firebase-adminsdk*.json

@@ -1,0 +1,54 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+:root {
+  --blue-deep: #0C2461;
+  --blue-mid: #1A4494;
+  --blue-accent: #1E6EF5;
+  --blue-sky: #5B9BFF;
+  --blue-ice: #E8F1FF;
+  --blue-pale: #F0F5FF;
+  --bg-offwhite: #F7F9FC;
+  --white: #FFFFFF;
+  --charcoal: #374151;
+  --slate-cool: #94A3B8;
+  --border-bluegrey: #DDE5F0;
+  --error: #EF4444;
+  --success: #16A34A;
+  --warning: #F59E0B;
+
+  --role-student: #2563EB;
+  --role-faculty: #6D28D9;
+  --role-admin: #B45309;
+
+  --radius-xs: 5px;
+  --radius-sm: 10px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
+  --radius-full: 100px;
+
+  --panel-pad-y: 48px;
+  --panel-pad-x: 52px;
+  --card-max-w: 420px;
+  --input-h: 50px;
+  --btn-h-lg: 52px;
+  --btn-h-sm: 46px;
+  --field-gap: 18px;
+  --section-gap: 36px;
+}
+
+body {
+  font-family: 'Outfit', sans-serif;
+  color: var(--charcoal);
+  background-color: var(--bg-offwhite);
+  -webkit-font-smoothing: antialiased;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

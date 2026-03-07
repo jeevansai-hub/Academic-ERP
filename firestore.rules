@@ -1,0 +1,78 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Users: read own profile, admin reads all
+    match /users/{userId} {
+      allow read: if request.auth.uid == userId
+                 || isAdmin();
+      allow create: if request.auth != null;
+      allow update: if request.auth.uid == userId
+                   || isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // Marks: students read own, faculty write, admin full
+    match /marks/{markId} {
+      allow read: if isOwner(resource.data.studentId)
+                 || isFaculty() || isAdmin();
+      allow create, update: if isFaculty() || isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // Subjects: authenticated reads, admin writes
+    match /subjects/{subjectId} {
+      allow read: if request.auth != null;
+      allow write: if isAdmin();
+    }
+
+    // Remarks: student reads own, faculty writes own
+    match /remarks/{remarkId} {
+      allow read: if isOwner(resource.data.studentId)
+                 || resource.data.facultyId == request.auth.uid
+                 || isAdmin();
+      allow create, update: if isFaculty() || isAdmin();
+      allow delete: if resource.data.facultyId == request.auth.uid
+                   || isAdmin();
+    }
+
+    // Weekly tests: same as marks rules
+    match /weeklyTests/{testId} {
+      allow read: if isOwner(resource.data.studentId)
+                 || isFaculty() || isAdmin();
+      allow write: if isFaculty() || isAdmin();
+    }
+
+    // CGPA records: student reads own, system writes
+    match /cgpaRecords/{recordId} {
+      allow read: if isOwner(resource.data.studentId) || isAdmin();
+      allow write: if isAdmin();
+    }
+
+    // Backlogs: student reads own, admin/faculty write
+    match /backlogs/{backlogId} {
+      allow read: if isOwner(resource.data.studentId)
+                 || isFaculty() || isAdmin();
+      allow write: if isFaculty() || isAdmin();
+    }
+
+    // Announcements: all auth users read, admin writes
+    match /announcements/{annoId} {
+      allow read: if request.auth != null;
+      allow write: if isAdmin();
+    }
+
+    // Helper functions
+    function isAdmin() {
+      return get(/databases/$(database)/documents/users/
+             $(request.auth.uid)).data.role == 'admin';
+    }
+    function isFaculty() {
+      return get(/databases/$(database)/documents/users/
+             $(request.auth.uid)).data.role == 'faculty';
+    }
+    function isOwner(uid) {
+      return request.auth.uid == uid;
+    }
+  }
+}
