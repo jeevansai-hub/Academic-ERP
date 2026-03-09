@@ -12,6 +12,13 @@ interface StudentLayoutProps {
 
 const StudentLayout: React.FC<StudentLayoutProps> = ({ activePage, onNavigate, children }) => {
   const [mobileOpen, setMobileOpen] = useState(false);
+  
+  // Bug 1: Close sidebar on activePage change
+  React.useEffect(() => {
+    if (window.innerWidth < 1025) {
+      setMobileOpen(false);
+    }
+  }, [activePage]);
 
   React.useEffect(() => {
     if (mobileOpen) {
@@ -69,7 +76,10 @@ const StudentLayout: React.FC<StudentLayoutProps> = ({ activePage, onNavigate, c
           return (
             <button
               key={tab.id}
-              onClick={() => onNavigate(tab.id)}
+              onClick={() => {
+                onNavigate(tab.id);
+                setMobileOpen(false);
+              }}
               className="flex flex-col items-center justify-center w-full h-full gap-1 pt-1"
             >
               <tab.icon size={22} style={{ color: isActive ? 'var(--blue)' : 'var(--text-muted)' }} />
