@@ -56,7 +56,7 @@ const Dashboard: React.FC = () => {
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, ease: 'easeOut' }}
-        className="rounded-xl p-7"
+        className="rounded-xl p-5 md:p-7"
         style={{
           background: 'var(--bg-card)',
           border: '1px solid var(--border-default)',
@@ -64,9 +64,9 @@ const Dashboard: React.FC = () => {
           boxShadow: 'var(--shadow-sm)',
         }}
       >
-        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+        <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
           <div>
-            <h1 className="font-title text-[28px]" style={{ color: 'var(--text-primary)' }}>
+            <h1 className="font-title text-[20px] md:text-[28px]" style={{ color: 'var(--text-primary)' }}>
               {greeting}, {studentInfo.name}
             </h1>
             <div className="flex flex-wrap items-center gap-5 mt-3">
@@ -93,7 +93,7 @@ const Dashboard: React.FC = () => {
         variants={cardStagger}
         initial="hidden"
         animate="show"
-        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"
+        className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4"
       >
         {[
           {
@@ -123,7 +123,7 @@ const Dashboard: React.FC = () => {
           <motion.div
             key={i}
             variants={cardItem}
-            className="rounded-xl p-6 relative overflow-hidden cursor-default"
+            className="rounded-xl p-[14px] md:p-6 relative overflow-hidden cursor-default"
             style={{
               background: 'var(--bg-card)',
               border: '1px solid var(--border-default)',
@@ -142,9 +142,9 @@ const Dashboard: React.FC = () => {
             }}
           >
             <div className="flex items-start justify-between">
-              <div className="w-8 h-8 rounded-lg flex items-center justify-center"
+              <div className="w-9 h-9 md:w-11 md:h-11 rounded-lg flex items-center justify-center"
                 style={{ background: card.iconBg, border: `1px solid ${card.iconColor}20` }}>
-                <card.icon size={16} strokeWidth={1.5} style={{ color: card.iconColor }} />
+                <card.icon size={18} strokeWidth={1.5} style={{ color: card.iconColor }} />
               </div>
               {card.badge && (
                 <span className="text-[10px] font-semibold uppercase px-2 py-0.5 rounded-full"
@@ -155,11 +155,11 @@ const Dashboard: React.FC = () => {
             </div>
             <p className="text-[11px] font-medium tracking-[1.5px] uppercase mt-4"
               style={{ color: 'var(--text-label)' }}>{card.label}</p>
-            <p className="font-mono text-[32px] font-medium mt-1" style={{ color: 'var(--text-primary)' }}>
+            <p className="font-mono text-[22px] md:text-[32px] font-medium mt-1" style={{ color: 'var(--text-primary)' }}>
               {card.value}
             </p>
             {card.sub && (
-              <p className="text-[12px] mt-1" style={{ color: card.subColor || 'var(--text-muted)' }}>
+              <p className="text-[12px] mt-1 hidden md:block" style={{ color: card.subColor || 'var(--text-muted)' }}>
                 {card.sub}
               </p>
             )}
@@ -220,11 +220,11 @@ const Dashboard: React.FC = () => {
             <span className="text-[14px] font-semibold" style={{ color: 'var(--text-primary)' }}>SGPA Trend</span>
             <span className="font-mono text-[11px]" style={{ color: 'var(--text-muted)' }}>Semester 1 — 6</span>
           </div>
-          <ResponsiveContainer width="100%" height={200}>
+          <ResponsiveContainer width="100%" height={220}>
             <LineChart data={sgpaTrend}>
               <CartesianGrid strokeDasharray="3 3" stroke="var(--border-faint)" vertical={false} />
               <XAxis dataKey="sem" tick={{ fontSize: 11, fill: 'var(--text-muted)', fontFamily: 'DM Sans' }} axisLine={false} tickLine={false} />
-              <YAxis domain={[6, 10]} tick={{ fontSize: 11, fill: 'var(--text-muted)', fontFamily: 'JetBrains Mono' }} axisLine={false} tickLine={false} />
+              <YAxis domain={[6, 10]} width={25} tick={{ fontSize: 11, fill: 'var(--text-muted)', fontFamily: 'JetBrains Mono' }} axisLine={false} tickLine={false} />
               <Tooltip
                 contentStyle={{
                   background: '#0f172a', border: 'none', borderRadius: 8, padding: '10px 14px',
@@ -234,7 +234,7 @@ const Dashboard: React.FC = () => {
                 formatter={(value: number) => [value.toFixed(1), 'SGPA']}
               />
               <Line
-                type="monotone" dataKey="sgpa" stroke="var(--green)" strokeWidth={2.5}
+                type="monotone" dataKey="sgpa" stroke="var(--green)" strokeWidth={2}
                 dot={{ r: 4, fill: 'var(--green)', stroke: '#fff', strokeWidth: 2 }}
                 activeDot={{ r: 6 }}
                 animationDuration={800}
@@ -256,27 +256,31 @@ const Dashboard: React.FC = () => {
             <span className="text-[14px] font-semibold" style={{ color: 'var(--text-primary)' }}>Subject Performance</span>
             <span className="font-mono text-[11px]" style={{ color: 'var(--text-muted)' }}>Semester 6</span>
           </div>
-          <ResponsiveContainer width="100%" height={220}>
-            <BarChart data={barData} layout="vertical">
-              <CartesianGrid strokeDasharray="3 3" stroke="var(--border-faint)" horizontal={false} />
-              <XAxis type="number" domain={[0, 100]} tick={{ fontSize: 11, fill: 'var(--text-muted)', fontFamily: 'JetBrains Mono' }} axisLine={false} tickLine={false} />
-              <YAxis dataKey="name" type="category" width={50} tick={{ fontSize: 11, fill: 'var(--text-muted)', fontFamily: 'JetBrains Mono' }} axisLine={false} tickLine={false} />
-              <Tooltip
-                contentStyle={{ background: '#0f172a', border: 'none', borderRadius: 8, padding: '10px 14px' }}
-                labelStyle={{ color: '#fff', fontFamily: 'DM Sans', fontSize: 11 }}
-                itemStyle={{ fontFamily: 'JetBrains Mono', fontSize: 13 }}
-                formatter={(value: number, name: string, entry: any) => [
-                  `${value}%`,
-                  entry.payload.fullName
-                ]}
-              />
-              <Bar dataKey="percentage" radius={[0, 4, 4, 0]} animationDuration={600} animationEasing="ease-out">
-                {barData.map((entry, idx) => (
-                  <Cell key={idx} fill={entry.status === 'Fail' ? 'var(--red)' : 'var(--blue)'} />
-                ))}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
+          <div style={{ width: '100%', overflowX: 'auto' }}>
+            <div style={{ minWidth: '300px' }}>
+              <ResponsiveContainer width="100%" height={220}>
+                <BarChart data={barData} layout="vertical">
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border-faint)" horizontal={false} />
+                  <XAxis type="number" domain={[0, 100]} tick={{ fontSize: 11, fill: 'var(--text-muted)', fontFamily: 'JetBrains Mono' }} axisLine={false} tickLine={false} />
+                  <YAxis dataKey="name" type="category" width={50} tick={{ fontSize: 11, fill: 'var(--text-muted)', fontFamily: 'JetBrains Mono' }} axisLine={false} tickLine={false} />
+                  <Tooltip
+                    contentStyle={{ background: '#0f172a', border: 'none', borderRadius: 8, padding: '10px 14px' }}
+                    labelStyle={{ color: '#fff', fontFamily: 'DM Sans', fontSize: 11 }}
+                    itemStyle={{ fontFamily: 'JetBrains Mono', fontSize: 13 }}
+                    formatter={(value: number, name: string, entry: any) => [
+                      `${value}%`,
+                      entry.payload.fullName
+                    ]}
+                  />
+                  <Bar dataKey="percentage" radius={[0, 4, 4, 0]} animationDuration={600} animationEasing="ease-out" barSize={16}>
+                    {barData.map((entry, idx) => (
+                      <Cell key={idx} fill={entry.status === 'Fail' ? 'var(--red)' : 'var(--blue)'} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
         </motion.div>
       </div>
 
@@ -295,7 +299,7 @@ const Dashboard: React.FC = () => {
         ].map((action, i) => (
           <div
             key={i}
-            className="rounded-xl py-5 px-4 flex flex-col items-center gap-2.5 cursor-pointer"
+            className="rounded-xl py-2 px-3 md:py-5 md:px-4 flex flex-col md:flex-row lg:flex-col items-center justify-center gap-1.5 md:gap-2.5 cursor-pointer text-center"
             style={{
               background: 'var(--bg-card)',
               border: '1px solid var(--border-default)',
@@ -312,8 +316,10 @@ const Dashboard: React.FC = () => {
               e.currentTarget.style.borderLeft = '1px solid var(--border-default)';
             }}
           >
-            <action.icon size={20} style={{ color: 'var(--blue)' }} />
-            <span className="text-[13px] font-medium" style={{ color: 'var(--text-secondary)' }}>{action.label}</span>
+            <action.icon size={18} className="md:w-5 md:h-5" style={{ color: 'var(--blue)' }} />
+            <span className="text-[12px] md:text-[13px] font-medium" style={{ color: 'var(--text-secondary)' }}>
+              {action.label.replace('Download Report', 'Report').replace('Check Backlogs', 'Backlogs')}
+            </span>
           </div>
         ))}
       </motion.div>

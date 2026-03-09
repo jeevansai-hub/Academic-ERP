@@ -8,7 +8,7 @@ const CGPAProgress: React.FC = () => {
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h1 className="font-title text-[32px]" style={{ color: 'var(--text-primary)', letterSpacing: '-0.5px' }}>CGPA & Progress</h1>
+        <h1 className="font-title text-[24px] md:text-[32px]" style={{ color: 'var(--text-primary)', letterSpacing: '-0.5px' }}>CGPA & Progress</h1>
         <p className="text-[13px] mt-1" style={{ color: 'var(--text-muted)' }}>Track your academic performance across semesters</p>
       </div>
       {/* Stat Cards */}
@@ -54,7 +54,7 @@ const CGPAProgress: React.FC = () => {
       {/* Table */}
       <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: 0.35 }}
         className="rounded-xl overflow-hidden" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-default)', boxShadow: 'var(--shadow-sm)' }}>
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto" style={{ WebkitOverflowScrolling: 'touch' }}>
           <table className="w-full min-w-[600px]">
             <thead>
               <tr style={{ background: 'var(--bg-subtle)', borderBottom: '2px solid var(--border-default)' }}>

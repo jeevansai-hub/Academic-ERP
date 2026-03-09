@@ -52,23 +52,15 @@ const CountUp = ({ end, suffix = "", duration = 2000 }: { end: number, suffix?: 
   return <span ref={ref}>{count.toLocaleString()}{suffix}</span>;
 };
 
-export const LoginPage = () => {
-  const [role, setRole] = useState<'student' | 'faculty' | 'admin'>('student');
-  const [identifier, setIdentifier] = useState('');
-  const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState(false);
-
+const LoginLeftPanel = React.memo(() => {
   // Dynamic Statistics (Hardcoded for now)
-  const [stats] = useState({
+  const stats = {
     totalStudents: 2400,
     totalBranches: 8,
     passRate: 94
-  });
-  // Left Panel Component
-  const LeftPanel = () => (
+  };
+
+  return (
     <>
       {/* Top Logo Block */}
       <div className="flex flex-row items-center gap-[14px] mb-[56px] animate-fade-up animate-delay-100">
@@ -172,6 +164,16 @@ export const LoginPage = () => {
       </div>
     </>
   );
+});
+
+const LoginRightPanel = () => {
+  const [role, setRole] = useState<'student' | 'faculty' | 'admin'>('student');
+  const [identifier, setIdentifier] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -199,7 +201,7 @@ export const LoginPage = () => {
   };
 
   return (
-    <AuthLayout leftPanelContent={<LeftPanel />}>
+    <>
       {/* Success Overlay */}
       <div className={`absolute inset-0 z-20 bg-white flex flex-col items-center justify-center transition-opacity duration-400 ${success ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}>
         <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[#1E6EF5] to-[#1354C8] shadow-[0_10px_32px_rgba(30,110,245,0.3)] flex items-center justify-center mb-6 animate-[popIn_0.5s_ease]">
@@ -356,6 +358,14 @@ export const LoginPage = () => {
 
         </form>
       </div>
+    </>
+  );
+};
+
+export const LoginPage = () => {
+  return (
+    <AuthLayout leftPanelContent={<LoginLeftPanel />}>
+      <LoginRightPanel />
     </AuthLayout>
   );
 };

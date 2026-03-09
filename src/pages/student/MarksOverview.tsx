@@ -27,7 +27,7 @@ const MarkOverview: React.FC = () => {
     <div className="flex flex-col gap-6">
       {/* Header */}
       <div>
-        <h1 className="font-title text-[32px]" style={{ color: 'var(--text-primary)', letterSpacing: '-0.5px' }}>Marks Overview</h1>
+        <h1 className="font-title text-[24px] md:text-[32px]" style={{ color: 'var(--text-primary)', letterSpacing: '-0.5px' }}>Marks Overview</h1>
         <p className="text-[13px] mt-1" style={{ color: 'var(--text-muted)' }}>Comprehensive view of all subject marks</p>
       </div>
 
@@ -92,8 +92,8 @@ const MarkOverview: React.FC = () => {
 
       {/* Table */}
       <div className="rounded-xl overflow-hidden" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-default)', boxShadow: 'var(--shadow-sm)' }}>
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[800px]">
+        <div className="overflow-x-auto" style={{ WebkitOverflowScrolling: 'touch' }}>
+          <table className="w-full min-w-[600px] md:min-w-[800px]">
             <thead>
               <tr style={{ background: 'var(--bg-subtle)', borderBottom: '2px solid var(--border-default)' }}>
                 {['SUBJECT', 'WEEKLY AVG', 'INTERNAL', 'MID SEM', 'END SEM', 'TOTAL', 'PERCENTAGE', 'GRADE', 'STATUS'].map(h => (

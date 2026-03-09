@@ -5,6 +5,13 @@ export default {
     "./**/*.{js,ts,jsx,tsx}",
   ],
   theme: {
+    screens: {
+      'sm': '640px',
+      'md': '769px',
+      'lg': '1025px',
+      'xl': '1280px',
+      '2xl': '1536px',
+    },
     extend: {
       colors: {
         'blue-deep': '#0C2461',

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Menu } from 'lucide-react';
+import { Menu, Home, FileText, Users, BarChart2 } from 'lucide-react';
 import Navbar from './Navbar';
 import Sidebar from './Sidebar';
 
@@ -13,19 +13,21 @@ interface StudentLayoutProps {
 const StudentLayout: React.FC<StudentLayoutProps> = ({ activePage, onNavigate, children }) => {
   const [mobileOpen, setMobileOpen] = useState(false);
 
+  React.useEffect(() => {
+    if (mobileOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [mobileOpen]);
+
   return (
     <div className="min-h-screen" style={{ background: 'var(--bg-page)' }}>
-      <Navbar />
+      <Navbar onMenuClick={() => setMobileOpen(!mobileOpen)} isMenuOpen={mobileOpen} />
       
-      {/* Mobile menu button */}
-      <button
-        onClick={() => setMobileOpen(true)}
-        className="fixed top-[14px] left-4 z-50 p-1.5 rounded-md lg:hidden"
-        style={{ color: 'var(--text-secondary)', background: 'var(--bg-card)' }}
-      >
-        <Menu size={20} />
-      </button>
-
       <Sidebar
         activePage={activePage}
         onNavigate={onNavigate}
@@ -37,10 +39,10 @@ const StudentLayout: React.FC<StudentLayoutProps> = ({ activePage, onNavigate, c
         initial={{ y: 12, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.4, ease: 'easeOut', delay: 0.1 }}
-        className="lg:ml-[220px] mt-[56px] p-4 sm:p-6 lg:p-8"
+        className="lg:ml-[240px] mt-[56px] p-3 md:p-5 lg:p-6 pb-[84px] md:pb-6"
         style={{ minHeight: 'calc(100vh - 56px)' }}
       >
-        <div className="max-w-[1200px] mx-auto">
+        <div className="w-full mx-auto" style={{ overflowX: 'hidden' }}>
           <AnimatePresence mode="wait">
             <motion.div
               key={activePage}
@@ -54,6 +56,35 @@ const StudentLayout: React.FC<StudentLayoutProps> = ({ activePage, onNavigate, c
           </AnimatePresence>
         </div>
       </motion.main>
+
+      {/* Mobile Bottom Navigation */}
+      <div className="md:hidden fixed bottom-0 left-0 right-0 h-[64px] bg-white border-t border-gray-200 shadow-[0_-2px_10px_rgba(0,0,0,0.05)] flex justify-around items-center z-40 px-2">
+        {[
+          { icon: Home, label: 'Home', id: 'dashboard' },
+          { icon: FileText, label: 'Marks', id: 'marks' },
+          { icon: Users, label: 'Students', id: 'students' },
+          { icon: BarChart2, label: 'Analytics', id: 'weekly' },
+        ].map((tab) => {
+          const isActive = activePage === tab.id;
+          return (
+            <button
+              key={tab.id}
+              onClick={() => onNavigate(tab.id)}
+              className="flex flex-col items-center justify-center w-full h-full gap-1 pt-1"
+            >
+              <tab.icon size={22} style={{ color: isActive ? 'var(--blue)' : 'var(--text-muted)' }} />
+              <span className="text-[10px] font-medium" style={{ color: isActive ? 'var(--blue)' : 'var(--text-muted)' }}>{tab.label}</span>
+            </button>
+          );
+        })}
+        <button
+          onClick={() => setMobileOpen(true)}
+          className="flex flex-col items-center justify-center w-full h-full gap-1 pt-1"
+        >
+          <Menu size={22} style={{ color: 'var(--text-muted)' }} />
+          <span className="text-[10px] font-medium" style={{ color: 'var(--text-muted)' }}>More</span>
+        </button>
+      </div>
     </div>
   );
 };

@@ -1,8 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import StudentLayout from '../../components/layout/StudentLayout';
 import Dashboard from './Dashboard';
 import MarksOverview from './MarksOverview';
-import SubjectAnalysis from './SubjectAnalysis';
 import WeeklyTestInsights from './WeeklyTestInsights';
 import InternalAssessment from './InternalAssessment';
 import CGPAProgress from './CGPAProgress';
@@ -15,7 +14,6 @@ import StudentProfile from './StudentProfile';
 const pageComponents: Record<string, React.FC> = {
   dashboard: Dashboard,
   marks: MarksOverview,
-  analysis: SubjectAnalysis,
   weekly: WeeklyTestInsights,
   internal: InternalAssessment,
   cgpa: CGPAProgress,
@@ -29,6 +27,10 @@ const pageComponents: Record<string, React.FC> = {
 const StudentDashboard: React.FC = () => {
   const [activePage, setActivePage] = useState('dashboard');
   const PageComponent = pageComponents[activePage] || Dashboard;
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [activePage]);
 
   return (
     <StudentLayout activePage={activePage} onNavigate={setActivePage}>

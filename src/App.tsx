@@ -3,6 +3,7 @@ import { AuthProvider } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { LoginPage } from './pages/auth/LoginPage';
 import StudentDashboard from './pages/student/StudentDashboard';
+import ScrollToTop from './components/common/ScrollToTop';
 
 // Basic scaffolding for pages
 const RegisterPage = () => <div className="p-8">Register Page Placeholder</div>;
@@ -10,6 +11,7 @@ const RegisterPage = () => <div className="p-8">Register Page Placeholder</div>;
 function App() {
   return (
     <Router>
+      <ScrollToTop />
       <AuthProvider>
         <ThemeProvider>
           <Routes>

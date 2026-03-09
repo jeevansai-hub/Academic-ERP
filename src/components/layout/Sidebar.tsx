@@ -10,7 +10,6 @@ import { studentInfo } from '../../data/studentData';
 const navItems = [
   { icon: LayoutDashboard, label: 'Dashboard', path: 'dashboard' },
   { icon: FileText, label: 'Marks Overview', path: 'marks' },
-  { icon: BarChart2, label: 'Subject-wise Analysis', path: 'analysis' },
   { icon: Calendar, label: 'Weekly Test Insights', path: 'weekly' },
   { icon: ClipboardList, label: 'Internal Assessment', path: 'internal' },
   { icon: TrendingUp, label: 'CGPA & Progress', path: 'cgpa' },
@@ -34,10 +33,11 @@ const Sidebar: React.FC<SidebarProps> = ({ activePage, onNavigate, isMobileOpen,
       {isMobileOpen && (
         <motion.div
           initial={{ opacity: 0 }}
-          animate={{ opacity: 0.4 }}
+          animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          transition={{ duration: 0.25 }}
-          className="fixed inset-0 bg-black z-40 lg:hidden"
+          transition={{ duration: 0.3 }}
+          className="fixed inset-0 z-40 lg:hidden"
+          style={{ background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(2px)' }}
           onClick={onCloseMobile}
         />
       )}
@@ -46,7 +46,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activePage, onNavigate, isMobileOpen,
         initial={{ x: -12, opacity: 0 }}
         animate={{ x: 0, opacity: 1 }}
         transition={{ duration: 0.35, ease: 'easeOut', delay: 0.05 }}
-        className={`fixed top-[56px] left-0 w-[220px] overflow-hidden flex flex-col z-40
+        className={`fixed top-[56px] left-0 w-[280px] lg:w-[240px] overflow-hidden flex flex-col z-40
           ${isMobileOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 transition-transform duration-300`}
         style={{
           height: 'calc(100vh - 56px)',
@@ -58,10 +58,10 @@ const Sidebar: React.FC<SidebarProps> = ({ activePage, onNavigate, isMobileOpen,
         {/* Mobile close button */}
         <button
           onClick={onCloseMobile}
-          className="lg:hidden absolute top-3 right-3 p-1"
+          className="lg:hidden absolute top-3 right-3 p-2 rounded-md transition-colors z-50"
           style={{ color: 'var(--text-muted)' }}
         >
-          <X size={16} />
+          <X size={20} />
         </button>
 
         {/* Student mini-profile */}
