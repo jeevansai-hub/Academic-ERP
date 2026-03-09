@@ -4,6 +4,54 @@ import {
   User, Lock, Eye, EyeOff, LayoutDashboard, Bell, FileText, ArrowRight
 } from 'lucide-react';
 
+const CountUp = ({ end, suffix = "", duration = 2000 }: { end: number, suffix?: string, duration?: number }) => {
+  const [count, setCount] = useState(0);
+  const [isVisible, setIsVisible] = useState(false);
+  const ref = React.useRef<HTMLSpanElement>(null);
+
+  React.useEffect(() => {
+    const observer = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting) {
+        setIsVisible(true);
+        observer.disconnect();
+      }
+    }, { threshold: 0.1 });
+
+    if (ref.current) {
+      observer.observe(ref.current);
+    }
+
+    return () => observer.disconnect();
+  }, []);
+
+  React.useEffect(() => {
+    if (!isVisible) return;
+
+    let startTimestamp: number | null = null;
+    let animationFrameId: number;
+
+    const step = (timestamp: number) => {
+      if (!startTimestamp) startTimestamp = timestamp;
+      const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+      
+      const easeOut = 1 - Math.pow(1 - progress, 4);
+      setCount(Math.floor(easeOut * end));
+      
+      if (progress < 1) {
+        animationFrameId = window.requestAnimationFrame(step);
+      } else {
+        setCount(end);
+      }
+    };
+
+    animationFrameId = window.requestAnimationFrame(step);
+
+    return () => window.cancelAnimationFrame(animationFrameId);
+  }, [end, duration, isVisible]);
+
+  return <span ref={ref}>{count.toLocaleString()}{suffix}</span>;
+};
+
 export const LoginPage = () => {
   const [role, setRole] = useState<'student' | 'faculty' | 'admin'>('student');
   const [identifier, setIdentifier] = useState('');
@@ -13,6 +61,12 @@ export const LoginPage = () => {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
 
+  // Dynamic Statistics (Hardcoded for now)
+  const [stats] = useState({
+    totalStudents: 2400,
+    totalBranches: 8,
+    passRate: 94
+  });
   // Left Panel Component
   const LeftPanel = () => (
     <>
@@ -97,15 +151,21 @@ export const LoginPage = () => {
       <div className="mt-auto pt-8 border-t border-white/10 animate-fade-up animate-delay-650">
         <div className="grid grid-cols-3 gap-2">
           <div className="flex flex-col">
-            <span className="text-stat-num">2,400+</span>
+            <span className="text-stat-num">
+              <CountUp end={stats.totalStudents} suffix="+" duration={1800} />
+            </span>
             <span className="text-stat-label text-white/55">Students</span>
           </div>
           <div className="flex flex-col">
-            <span className="text-stat-num">8</span>
+            <span className="text-stat-num">
+              <CountUp end={stats.totalBranches} duration={900} />
+            </span>
             <span className="text-stat-label text-white/55">Branches</span>
           </div>
           <div className="flex flex-col">
-            <span className="text-stat-num">94%</span>
+            <span className="text-stat-num">
+              <CountUp end={stats.passRate} suffix="%" duration={1100} />
+            </span>
             <span className="text-stat-label text-white/55">Pass Rate</span>
           </div>
         </div>

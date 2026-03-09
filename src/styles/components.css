@@ -1,74 +1,138 @@
+/* ═══ OLD LOGIN PAGE TEXT CLASSES ═══ */
 .text-display {
-    font-family: 'Fraunces', serif;
-    font-weight: 700;
-    font-size: clamp(32px, 4vw, 48px);
-    line-height: 1.08;
-  }
-  .text-form-title {
-    font-family: 'Fraunces', serif;
-    font-weight: 700;
-    font-size: 32px;
-    line-height: 1.1;
-    color: var(--blue-deep);
-  }
-  .text-logo-name {
-    font-family: 'Fraunces', serif;
-    font-weight: 700;
-    font-size: 16px;
-    color: var(--white);
-  }
-  .text-body-lg {
-    font-family: 'Outfit', sans-serif;
-    font-weight: 300;
-    font-size: 14.5px;
-    line-height: 1.75;
-  }
-  .text-body {
-    font-family: 'Outfit', sans-serif;
-    font-weight: 400;
-    font-size: 14px;
-    line-height: 1.6;
-  }
-  .text-label {
-    font-family: 'Outfit', sans-serif;
-    font-weight: 500;
-    font-size: 12px;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-  }
-  .text-button {
-    font-family: 'Outfit', sans-serif;
-    font-weight: 600;
-    font-size: 15px;
-    letter-spacing: 0.02em;
-  }
-  .text-badge {
-    font-family: 'Outfit', sans-serif;
-    font-weight: 500;
-    font-size: 11px;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-  }
-  .text-footer {
-    font-family: 'Outfit', sans-serif;
-    font-weight: 400;
-    font-size: 13px;
-  }
-  .text-stat-num {
-    font-family: 'Fraunces', serif;
-    font-weight: 700;
-    font-size: 22px;
-    color: var(--white);
-  }
-  .text-stat-label {
-    font-family: 'Outfit', sans-serif;
-    font-weight: 400;
-    font-size: 10.5px;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-  }
-  .text-mono {
-    font-family: 'JetBrains Mono', monospace;
-    font-weight: 400;
-    font-size: 12px;
-  }
+  font-family: 'Fraunces', serif;
+  font-weight: 700;
+  font-size: clamp(32px, 4vw, 48px);
+  line-height: 1.08;
+}
+.text-form-title {
+  font-family: 'Fraunces', serif;
+  font-weight: 700;
+  font-size: 32px;
+  line-height: 1.1;
+  color: var(--blue-deep);
+}
+.text-logo-name {
+  font-family: 'Fraunces', serif;
+  font-weight: 700;
+  font-size: 16px;
+  color: var(--white);
+}
+.text-body-lg {
+  font-family: 'Outfit', sans-serif;
+  font-weight: 300;
+  font-size: 14.5px;
+  line-height: 1.75;
+}
+.text-body {
+  font-family: 'Outfit', sans-serif;
+  font-weight: 400;
+  font-size: 14px;
+  line-height: 1.6;
+}
+.text-label {
+  font-family: 'Outfit', sans-serif;
+  font-weight: 500;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.text-button {
+  font-family: 'Outfit', sans-serif;
+  font-weight: 600;
+  font-size: 15px;
+  letter-spacing: 0.02em;
+}
+.text-badge {
+  font-family: 'Outfit', sans-serif;
+  font-weight: 500;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+.text-footer {
+  font-family: 'Outfit', sans-serif;
+  font-weight: 400;
+  font-size: 13px;
+}
+.text-stat-num {
+  font-family: 'Fraunces', serif;
+  font-weight: 700;
+  font-size: 22px;
+  color: var(--white);
+}
+.text-stat-label {
+  font-family: 'Outfit', sans-serif;
+  font-weight: 400;
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.text-mono {
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 400;
+  font-size: 12px;
+}
+
+/* ═══ ECAP STUDENT PORTAL CLASSES ═══ */
+.text-page-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-weight: 600;
+  font-size: 32px;
+  letter-spacing: -0.5px;
+  color: var(--text-primary);
+}
+
+.text-card-title {
+  font-family: 'DM Sans', sans-serif;
+  font-weight: 600;
+  font-size: 16px;
+  color: var(--text-primary);
+}
+
+.text-label-upper {
+  font-family: 'DM Sans', sans-serif;
+  font-weight: 500;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--text-label);
+}
+
+.text-body-sm {
+  font-family: 'DM Sans', sans-serif;
+  font-weight: 400;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.text-mono-value {
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 500;
+  font-size: 13px;
+  color: var(--text-primary);
+}
+
+.text-stat-value {
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 500;
+  font-size: 32px;
+  color: var(--text-primary);
+}
+
+/* Grade Badges */
+.grade-badge {
+  font-family: 'DM Sans', sans-serif;
+  font-weight: 600;
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  display: inline-flex;
+  align-items: center;
+}
+.grade-aplus { background: rgba(5,150,105,0.1); border: 1px solid rgba(5,150,105,0.2); color: var(--grade-aplus); }
+.grade-a { background: rgba(37,99,235,0.1); border: 1px solid rgba(37,99,235,0.2); color: var(--grade-a); }
+.grade-bplus { background: rgba(124,58,237,0.1); border: 1px solid rgba(124,58,237,0.2); color: var(--grade-b); }
+.grade-b { background: rgba(124,58,237,0.08); border: 1px solid rgba(124,58,237,0.15); color: var(--grade-b); }
+.grade-c { background: rgba(217,119,6,0.1); border: 1px solid rgba(217,119,6,0.2); color: var(--grade-c); }
+.grade-f { background: rgba(220,38,38,0.1); border: 1px solid rgba(220,38,38,0.2); color: var(--grade-f); }
