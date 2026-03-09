@@ -17,7 +17,7 @@ const StudentLayout: React.FC<StudentLayoutProps> = ({ activePage, onNavigate, c
 
   useEffect(() => {
     setMobileOpen(false);
-  }, [location.pathname]);
+  }, [location.pathname, activePage]);
 
   return (
     <div className="min-h-screen" style={{ background: 'var(--bg-page)' }}>
