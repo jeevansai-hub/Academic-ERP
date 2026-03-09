@@ -5,6 +5,7 @@ import {
   ClipboardList, TrendingUp, AlertCircle, MessageSquare,
   Download, Search, Settings, LogOut, X
 } from 'lucide-react';
+import { AnimatePresence } from 'framer-motion';
 import { studentInfo } from '../../data/studentData';
 
 const navItems = [
@@ -30,16 +31,18 @@ const Sidebar: React.FC<SidebarProps> = ({ activePage, onNavigate, isMobileOpen,
   return (
     <>
       {/* Mobile backdrop */}
-      {isMobileOpen && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 0.4 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.25 }}
-          className="fixed inset-0 bg-black z-40 lg:hidden"
-          onClick={onCloseMobile}
-        />
-      )}
+      <AnimatePresence>
+        {isMobileOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 0.4 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.25 }}
+            className="fixed inset-0 bg-black z-40 lg:hidden cursor-pointer touch-none"
+            onClick={onCloseMobile}
+          />
+        )}
+      </AnimatePresence>
 
       <motion.aside
         initial={{ opacity: 0 }}
@@ -57,10 +60,11 @@ const Sidebar: React.FC<SidebarProps> = ({ activePage, onNavigate, isMobileOpen,
         {/* Mobile close button */}
         <button
           onClick={onCloseMobile}
-          className="lg:hidden absolute top-3 right-3 p-1"
-          style={{ color: 'var(--text-muted)' }}
+          className="lg:hidden absolute top-2 right-2 p-2.5 z-50 rounded-full bg-white/5 cursor-pointer touch-manipulation hover:bg-white/10"
+          style={{ color: 'var(--text-primary)' }}
+          aria-label="Close Sidebar"
         >
-          <X size={16} />
+          <X size={20} strokeWidth={2} />
         </button>
 
         {/* Student mini-profile */}

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Menu } from 'lucide-react';
+import { Menu, X } from 'lucide-react';
 import Navbar from './Navbar';
 import Sidebar from './Sidebar';
 
@@ -25,11 +25,11 @@ const StudentLayout: React.FC<StudentLayoutProps> = ({ activePage, onNavigate, c
       
       {/* Mobile menu button */}
       <button
-        onClick={() => setMobileOpen(true)}
+        onClick={() => setMobileOpen(!mobileOpen)}
         className="fixed top-[14px] left-4 z-50 p-1.5 rounded-md lg:hidden"
-        style={{ color: 'var(--text-secondary)', background: 'var(--bg-card)' }}
+        style={{ color: mobileOpen ? 'var(--blue)' : 'var(--text-secondary)', background: 'var(--bg-card)' }}
       >
-        <Menu size={20} />
+        {mobileOpen ? <X size={20} /> : <Menu size={20} />}
       </button>
 
       <Sidebar
