@@ -1,5 +1,5 @@
 import React from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import {
   LayoutDashboard, FileText, BarChart2, Calendar,
   ClipboardList, TrendingUp, AlertCircle, MessageSquare,
@@ -30,40 +30,37 @@ const Sidebar: React.FC<SidebarProps> = ({ activePage, onNavigate, isMobileOpen,
   return (
     <>
       {/* Mobile backdrop */}
-      <AnimatePresence>
-        {isMobileOpen && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.3 }}
-            className="fixed inset-0 z-40 lg:hidden"
-            style={{ background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(2px)' }}
-            onClick={onCloseMobile}
-          />
-        )}
-      </AnimatePresence>
+      {isMobileOpen && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 0.4 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.25 }}
+          className="fixed inset-0 bg-black z-40 lg:hidden"
+          onClick={onCloseMobile}
+        />
+      )}
 
       <motion.aside
-        initial={{ x: -12, opacity: 0 }}
-        animate={{ x: 0, opacity: 1 }}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
         transition={{ duration: 0.35, ease: 'easeOut', delay: 0.05 }}
-        className={`fixed top-[56px] lg:top-[56px] left-0 w-[80%] max-w-[300px] lg:w-[240px] overflow-hidden flex flex-col z-50 lg:z-40 lg:border-r lg:border-[var(--border-default)]
+        className={`fixed top-[56px] left-0 w-[220px] overflow-hidden flex flex-col z-40
           ${isMobileOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 transition-transform duration-300`}
         style={{
           height: 'calc(100vh - 56px)',
           background: 'var(--bg-card)',
-          boxShadow: isMobileOpen ? '4px 0 24px rgba(0,0,0,0.1)' : 'var(--shadow-xs)',
-          backgroundColor: '#ffffff'
+          borderRight: '1px solid var(--border-default)',
+          boxShadow: 'var(--shadow-xs)',
         }}
       >
         {/* Mobile close button */}
         <button
           onClick={onCloseMobile}
-          className="lg:hidden absolute top-3 right-3 p-2 rounded-md transition-colors z-50"
+          className="lg:hidden absolute top-3 right-3 p-1"
           style={{ color: 'var(--text-muted)' }}
         >
-          <X size={20} />
+          <X size={16} />
         </button>
 
         {/* Student mini-profile */}
