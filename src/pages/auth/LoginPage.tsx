@@ -1,5 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { AuthLayout } from '../../components/layout/AuthLayout';
+import { useAuth } from '../../context/AuthContext';
+import { useNavigate } from 'react-router-dom';
 import { 
   User, Lock, Eye, EyeOff, LayoutDashboard, Bell, FileText, ArrowRight
 } from 'lucide-react';
@@ -174,6 +176,9 @@ const LoginRightPanel = () => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
+  
+  const { login } = useAuth();
+  const navigate = useNavigate();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -189,14 +194,22 @@ const LoginRightPanel = () => {
     }
 
     setLoading(true);
+    
     // Simulate auth flow
-    setTimeout(() => {
-      setLoading(false);
-      setSuccess(true);
-      // simulate redirect after animation
-      setTimeout(() => {
-         window.location.href = `/${role}/dashboard`;
-      }, 1800);
+    setTimeout(async () => {
+      try {
+        await login(identifier, password, role);
+        setLoading(false);
+        setSuccess(true);
+        
+        // redirect after animation
+        setTimeout(() => {
+           navigate(`/${role}/dashboard`);
+        }, 1800);
+      } catch (err: any) {
+        setLoading(false);
+        setError(err.message || 'Failed to login. Please check your credentials.');
+      }
     }, 1500);
   };
 
