@@ -1,42 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import StudentLayout from '../../components/layout/StudentLayout';
-import Dashboard from './Dashboard';
-import MarksOverview from './MarksOverview';
-import WeeklyTestInsights from './WeeklyTestInsights';
-import InternalAssessment from './InternalAssessment';
-import CGPAProgress from './CGPAProgress';
-import BacklogsAlerts from './BacklogsAlerts';
-import RemarksFeedback from './RemarksFeedback';
-import ReportsDownloads from './ReportsDownloads';
-import SmartSearch from './SmartSearch';
-import StudentProfile from './StudentProfile';
+import React from 'react';
 
-const pageComponents: Record<string, React.FC> = {
-  dashboard: Dashboard,
-  marks: MarksOverview,
-  weekly: WeeklyTestInsights,
-  internal: InternalAssessment,
-  cgpa: CGPAProgress,
-  backlogs: BacklogsAlerts,
-  remarks: RemarksFeedback,
-  reports: ReportsDownloads,
-  search: SmartSearch,
-  profile: StudentProfile,
-};
-
-const StudentDashboard: React.FC = () => {
-  const [activePage, setActivePage] = useState('dashboard');
-  const PageComponent = pageComponents[activePage] || Dashboard;
-
-  useEffect(() => {
-    window.scrollTo(0, 0);
-  }, [activePage]);
-
-  return (
-    <StudentLayout activePage={activePage} onNavigate={setActivePage}>
-      <PageComponent />
-    </StudentLayout>
-  );
+const StudentDashboard = () => {
+  return <div></div>;
 };
 
 export default StudentDashboard;

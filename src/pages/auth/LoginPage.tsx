@@ -198,6 +198,22 @@ const LoginRightPanel = () => {
     // Simulate auth flow
     setTimeout(async () => {
       try {
+        if (role === 'admin') {
+          // Admin Login Logic (Rule 1)
+          localStorage.setItem('ecap_userRole', 'admin');
+          localStorage.setItem('ecap_adminUser', JSON.stringify({
+            name: 'Admin User',
+            email: 'admin@viit.ac.in',
+            initials: 'AD'
+          }));
+          setLoading(false);
+          setSuccess(true);
+          setTimeout(() => {
+            navigate('/admin/dashboard');
+          }, 1800);
+          return;
+        }
+
         await login(identifier, password, role);
         setLoading(false);
         setSuccess(true);

@@ -16,6 +16,7 @@ import AssessmentControl from './pages/faculty/AssessmentControl';
 import ReportsAttendance from './pages/faculty/ReportsAttendance';
 import SettingsPage from './pages/faculty/Settings';
 import FacultyLayout from './components/faculty/FacultyLayout';
+import AdminRoutes from './admin/AdminRoutes';
 
 // Basic scaffolding for pages
 const RegisterPage = () => <div className="p-8">Register Page Placeholder</div>;
@@ -121,6 +122,9 @@ function App() {
                 </ProtectedRoute>
               } 
             />
+
+            {/* Admin Routes */}
+            <Route path="/admin/*" element={<AdminRoutes />} />
 
             <Route path="/" element={<Navigate to="/login" replace />} />
           </Routes>
