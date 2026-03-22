@@ -40,20 +40,20 @@ const StudentLayout: React.FC<StudentLayoutProps> = ({ activePage, onNavigate, c
       />
 
       <motion.main
-        initial={{ y: 12, opacity: 0 }}
+        initial={{ y: 16, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.4, ease: 'easeOut', delay: 0.1 }}
-        className="lg:ml-[220px] mt-[56px] p-4 sm:p-6 lg:p-8"
-        style={{ minHeight: 'calc(100vh - 56px)' }}
+        className="lg:ml-[240px] mt-[56px] p-4 sm:p-7 lg:p-8"
+        style={{ minHeight: 'calc(100vh - 56px)', background: 'var(--bg-page)' }}
       >
-        <div className="max-w-[1200px] mx-auto">
+        <div className="max-w-[1280px] mx-auto">
           <AnimatePresence mode="wait">
             <motion.div
               key={activePage}
-              initial={{ opacity: 0, x: 8 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -8 }}
-              transition={{ duration: 0.2, ease: 'easeOut' }}
+              initial={{ opacity: 0, scale: 0.99 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.99 }}
+              transition={{ duration: 0.22, ease: 'easeOut' }}
             >
               {children}
             </motion.div>

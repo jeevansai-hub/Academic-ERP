@@ -4,7 +4,7 @@ import {
   LayoutDashboard, Users, GraduationCap, BookOpen, 
   BarChart3, Bell, ShieldCheck, Settings, 
   History, LogOut, ChevronLeft, ChevronRight,
-  Database
+  Database, ClipboardList
 } from 'lucide-react';
 import { useAdmin } from '../context/AdminContext';
 
@@ -24,6 +24,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ isCollapsed, setIsCollapsed
     { label: 'Faculty', icon: <GraduationCap size={20} />, path: 'faculty', badge: '85' },
     { label: 'Subjects & Depts', icon: <BookOpen size={20} />, path: 'subjects' },
     { label: 'Marks & Assessments', icon: <Database size={20} />, path: 'marks' },
+    { label: 'External Marks', icon: <ClipboardList size={20} />, path: 'external-marks' },
     { label: 'Analytics & Reports', icon: <BarChart3 size={20} />, path: 'analytics' },
     { label: 'Notifications', icon: <Bell size={20} />, path: 'notifications' },
     { label: 'Access & Roles', icon: <ShieldCheck size={20} />, path: 'access' },

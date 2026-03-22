@@ -65,9 +65,9 @@ const LoginLeftPanel = React.memo(() => {
   return (
     <>
       {/* Top Logo Block */}
-      <div className="flex flex-row items-center gap-[14px] mb-[56px] animate-fade-up animate-delay-100">
-        <div className="w-[54px] h-[54px] rounded-[14px] bg-[#FFFFFF] shadow-[0_4px_16px_rgba(0,0,0,0.25)] flex-shrink-0 flex items-center justify-center overflow-hidden p-[2px]">
-          <svg viewBox="0 0 200 200" width="46" height="46" xmlns="http://www.w3.org/2000/svg">
+      <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '16px', padding: 0 }} className="mb-[56px] animate-fade-up animate-delay-100">
+        <div style={{ width: '78px', height: '78px', borderRadius: '14px', flexShrink: 0, overflow: 'hidden' }} className="bg-[#FFFFFF] shadow-[0_4px_16px_rgba(0,0,0,0.25)] flex items-center justify-center p-[2.5px]">
+          <svg viewBox="0 0 200 200" style={{ width: '100%', height: '100%', objectFit: 'contain' }} xmlns="http://www.w3.org/2000/svg">
             <defs>
               <clipPath id="circle-clip">
                 <circle cx="100" cy="100" r="98"/>
@@ -99,10 +99,10 @@ const LoginLeftPanel = React.memo(() => {
             <polygon points="100,81.5 104,93.5 116.5,93.5 106.5,101 110.5,113 100,105.5 89.5,113 93.5,101 83.5,93.5 96,93.5" fill="#0BA9E6"/>
           </svg>
         </div>
-        <div className="flex flex-col">
-          <h1 className="font-body font-[800] text-[20px] text-[#EF3A3A] tracking-[0.01em] uppercase leading-[1]">VIGNAN'S</h1>
-          <h2 className="font-body font-[600] text-[7px] text-[rgba(255,255,255,0.88)] tracking-[0.10em] uppercase mt-[4px] leading-[1.2]">INSTITUTE OF INFORMATION TECHNOLOGY</h2>
-          <p className="font-body font-[400] text-[7px] text-[rgba(255,255,255,0.42)] tracking-[0.12em] mt-[3px]">Estd. 2002 · Visakhpatnam</p>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+          <h1 style={{ fontSize: '26px', fontWeight: 800, color: '#E8390E', letterSpacing: '0.5px', lineHeight: 1, textTransform: 'uppercase' }} className="font-body">VIGNAN'S</h1>
+          <h2 style={{ fontSize: '12px', fontWeight: 600, color: 'rgba(255,255,255,0.85)', letterSpacing: '0.6px', textTransform: 'uppercase', lineHeight: 1.2 }} className="font-body">INSTITUTE OF INFORMATION TECHNOLOGY</h2>
+          <p style={{ fontSize: '13px', fontWeight: 400, color: 'rgba(255,255,255,0.45)', letterSpacing: '0.3px' }} className="font-body">Estd. 2002 · Visakhpatnam</p>
         </div>
       </div>
 
@@ -110,7 +110,7 @@ const LoginLeftPanel = React.memo(() => {
       <div className="flex flex-col flex-grow justify-center">
         <div className="inline-flex items-center gap-2 bg-white/8 border border-white/14 rounded-full py-1.5 px-3.5 mb-5 w-fit animate-fade-up animate-delay-200">
           <div className="w-1.5 h-1.5 rounded-full bg-[#5B9BFF]"></div>
-          <span className="font-body font-medium text-[11px] tracking-[0.1em] uppercase text-white/65">Student Performance Portal 2024–25</span>
+          <span className="font-body font-medium text-[11px] tracking-[0.1em] uppercase text-white/65">STUDENT PERFORMANCE PORTAL 2025–26</span>
         </div>
 
         <h2 className="text-display text-white mb-6 animate-fade-up animate-delay-300">
@@ -259,26 +259,42 @@ const LoginRightPanel = () => {
         {/* Role Selector */}
         <div className="flex flex-col mb-6">
           <span className="font-body font-medium text-[10px] tracking-[0.15em] uppercase text-slate-cool mb-2">SIGN IN AS</span>
-          <div className="flex bg-bg-offwhite border border-border-bluegrey p-1 rounded-sm relative">
-            {['student', 'faculty', 'admin'].map((r) => (
-              <button
-                key={r}
-                type="button"
-                onClick={() => setRole(r as any)}
-                className={`flex-1 py-1.5 text-[13px] font-medium rounded-lg transition-colors capitalize z-10 ${role === r ? 'text-white' : 'text-slate-cool hover:text-charcoal'}`}
-              >
-                {r}
-              </button>
-            ))}
-            {/* Active Pill Indicator */}
-            <div 
-              className="absolute top-1 bottom-1 w-[calc(33.333%-4px)] rounded-lg transition-all duration-250 ease-out"
-              style={{
-                backgroundColor: role === 'student' ? 'var(--role-student)' : role === 'faculty' ? 'var(--role-faculty)' : 'var(--role-admin)',
-                transform: `translateX(${role === 'student' ? '0' : role === 'faculty' ? '100%' : '200%'})`,
-                marginLeft: role === 'faculty' ? '4px' : role === 'admin' ? '8px' : '0'
-              }}
-            ></div>
+          <div 
+            className="flex p-1 rounded-sm relative"
+            style={{ background: '#F1F5F9', border: '1px solid #E2E8F0' }}
+          >
+            {['student', 'faculty', 'admin'].map((r) => {
+              const isActive = role === r;
+              return (
+                <button
+                  key={r}
+                  type="button"
+                  onClick={() => setRole(r as any)}
+                  className={`flex-1 py-1.5 text-[13px] rounded-lg transition-all capitalize z-10`}
+                  style={{
+                    background: isActive ? '#FFFFFF' : 'transparent',
+                    color: isActive ? '#0F1629' : '#64748B',
+                    fontWeight: isActive ? 600 : 500,
+                    cursor: isActive ? 'default' : 'pointer',
+                    boxShadow: isActive ? '0 1px 3px rgba(0,0,0,0.1)' : 'none'
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!isActive) {
+                      e.currentTarget.style.color = '#0F1629';
+                      e.currentTarget.style.background = '#E2E8F0';
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!isActive) {
+                      e.currentTarget.style.color = '#64748B';
+                      e.currentTarget.style.background = 'transparent';
+                    }
+                  }}
+                >
+                  {r}
+                </button>
+              );
+            })}
           </div>
         </div>
 

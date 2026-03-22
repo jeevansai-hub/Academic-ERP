@@ -1,8 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Bell, X, User, HelpCircle, LogOut, Menu } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { Search, Bell, X, ChevronDown, User, HelpCircle, LogOut, CheckCircle } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { useNavigate } from 'react-router-dom';
 import { studentInfo, notifications } from '../../data/studentData';
 
 interface NavbarProps {
@@ -13,233 +13,231 @@ interface NavbarProps {
 const Navbar: React.FC<NavbarProps> = ({ onMenuClick, isMenuOpen }) => {
   const navigate = useNavigate();
   const { logout } = useAuth();
-  
-  const [showNotif, setShowNotif] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
-  const notifRef = useRef<HTMLDivElement>(null);
-  const profileRef = useRef<HTMLDivElement>(null);
+  const [searchValue, setSearchValue] = useState('');
+  
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      if (notifRef.current && !notifRef.current.contains(e.target as Node)) setShowNotif(false);
-      if (profileRef.current && !profileRef.current.contains(e.target as Node)) setShowProfile(false);
-    };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
+    const handleScroll = () => setScrolled(window.scrollY > 20);
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  const dotColor: Record<string, string> = {
-    red: 'var(--red)',
-    blue: 'var(--blue)',
-    purple: 'var(--purple)',
+  useEffect(() => {
+    if (isSearchOpen) searchInputRef.current?.focus();
+  }, [isSearchOpen]);
+
+  const toggleSearch = () => {
+    setIsSearchOpen(!isSearchOpen);
+    if (!isSearchOpen) setSearchValue('');
   };
 
   return (
-    <motion.nav
-      initial={{ y: -10, opacity: 0 }}
-      animate={{ y: 0, opacity: 1 }}
-      transition={{ duration: 0.3, ease: 'easeOut' }}
-      className="fixed top-0 left-0 right-0 h-[56px] flex items-center justify-between px-6 z-50"
-      style={{
-        background: 'var(--bg-card)',
-        borderBottom: '1px solid var(--border-default)',
-        boxShadow: 'var(--shadow-xs)',
-      }}
+    <header 
+      className={`fixed top-0 left-0 right-0 h-14 flex items-center justify-between px-7 z-50 transition-all duration-300 border-b
+        ${scrolled ? 'bg-white/92 backdrop-blur-md saturate-[180%] border-[#E5E7EB]' : 'bg-white border-transparent'}`}
     >
-      {/* Left */}
-      <div className="flex items-center gap-3">
-        {onMenuClick && (
-          <button
-            onClick={onMenuClick}
-            className="hidden md:block lg:hidden p-1.5 -ml-2 rounded-md transition-colors"
-            style={{ color: 'var(--text-secondary)' }}
-            onMouseEnter={e => (e.currentTarget.style.background = 'var(--bg-hover)')}
-            onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
-          >
-            {isMenuOpen ? <X size={20} /> : <Menu size={20} />}
-          </button>
-        )}
-        <span className="font-title text-[22px]" style={{ color: 'var(--text-primary)' }}>
-          ECAP
-        </span>
-        <div className="hidden md:block w-[1px] h-4" style={{ background: 'var(--border-default)' }} />
-        <span
-          className="hidden md:inline-block text-[11px] font-medium tracking-[2px] uppercase"
-          style={{ color: 'var(--text-muted)', fontFamily: "'DM Sans', sans-serif" }}
-        >
-          Student Performance Portal
-        </span>
+      {/* Left: Breadcrumb */}
+      <div className="flex items-center gap-1.5 min-w-[200px]">
+        <span className="text-[12px] font-outfit text-[#9CA3AF]">Student</span>
+        <span className="text-[#D1D5DB]">/</span>
+        <span className="text-[12px] font-outfit font-medium text-[#6B7280]">Dashboard</span>
       </div>
 
-      {/* Right */}
-      <div className="flex items-center gap-4">
-        {/* Notification bell */}
-        <div className="relative" ref={notifRef}>
-          <button
-            onClick={() => { setShowNotif(!showNotif); setShowProfile(false); }}
-            className="relative p-2 rounded-md transition-colors duration-150"
-            style={{ color: 'var(--text-secondary)' }}
-            onMouseEnter={e => (e.currentTarget.style.color = 'var(--blue)')}
-            onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-secondary)')}
-            id="notification-bell"
-          >
-            <Bell size={18} strokeWidth={1.5} />
-            <span
-              className="absolute top-1 right-1 w-2 h-2 rounded-full"
-              style={{ background: 'var(--red)' }}
-            />
-          </button>
+      {/* Center: Title */}
+      <div className="absolute left-1/2 -translate-x-1/2">
+        <h1 className="text-[16px] font-semibold font-outfit text-[#111827]">Dashboard</h1>
+      </div>
 
+      {/* Right: Actions */}
+      <div className="flex items-center gap-4 min-w-[200px] justify-end">
+        {/* Search */}
+        <div className="flex items-center relative">
           <AnimatePresence>
-            {showNotif && (
+            {isSearchOpen && (
               <motion.div
-                initial={{ opacity: 0, y: -6, scale: 0.97 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: -6, scale: 0.97 }}
-                transition={{ duration: 0.2, ease: 'easeOut' }}
-                className="absolute right-0 top-[48px] w-[320px] rounded-xl overflow-hidden"
-                style={{
-                  background: 'var(--bg-card)',
-                  border: '1px solid var(--border-default)',
-                  boxShadow: 'var(--shadow-lg)',
-                }}
+                initial={{ width: 0, opacity: 0 }}
+                animate={{ width: 300, opacity: 1 }}
+                exit={{ width: 0, opacity: 0 }}
+                transition={{ duration: 0.2, ease: "easeOut" }}
+                className="absolute right-0 flex items-center bg-[#F9FAFB] border border-[#E5E7EB] rounded-lg h-9 overflow-hidden pr-3"
               >
-                <div className="px-4 py-3 flex items-center justify-between" style={{ borderBottom: '1px solid var(--border-default)' }}>
-                  <span className="text-[13px] font-semibold" style={{ color: 'var(--text-primary)' }}>Notifications</span>
-                  <button onClick={() => setShowNotif(false)}>
-                    <X size={14} style={{ color: 'var(--text-muted)' }} />
+                <input
+                  ref={searchInputRef}
+                  type="text"
+                  value={searchValue}
+                  onChange={(e) => setSearchValue(e.target.value)}
+                  placeholder="Search marks, subjects, remarks..."
+                  className="bg-transparent border-none outline-none px-3 w-full text-[13px] font-outfit placeholder-[#9CA3AF]"
+                />
+                {searchValue && (
+                  <button onClick={() => setSearchValue('')}>
+                    <X size={14} className="text-[#9CA3AF] hover:text-[#6B7280]" />
                   </button>
-                </div>
-                {notifications.map((n, i) => (
-                  <div
-                    key={i}
-                    className="px-4 py-3 flex items-start gap-3 cursor-pointer transition-colors duration-[120ms]"
-                    style={{ borderBottom: i < notifications.length - 1 ? '1px solid var(--border-faint)' : 'none' }}
-                    onMouseEnter={e => (e.currentTarget.style.background = 'var(--bg-hover)')}
-                    onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
-                  >
-                    <span
-                      className="w-2 h-2 rounded-full mt-1.5 flex-shrink-0"
-                      style={{ background: dotColor[n.type] || 'var(--blue)' }}
-                    />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-[13px]" style={{ color: 'var(--text-primary)' }}>{n.text}</p>
-                    </div>
-                    <span className="font-mono text-[11px] flex-shrink-0" style={{ color: 'var(--text-muted)' }}>{n.time}</span>
-                  </div>
-                ))}
+                )}
               </motion.div>
             )}
           </AnimatePresence>
-        </div>
-
-        <div className="w-[1px] h-4" style={{ background: 'var(--border-default)' }} />
-
-        {/* Student info */}
-        <div className="text-right hidden sm:block">
-          <p className="text-[13px] font-semibold" style={{ color: 'var(--text-primary)' }}>{studentInfo.name}</p>
-          <p className="font-mono text-[11px]" style={{ color: 'var(--text-muted)' }}>{studentInfo.rollNo}</p>
-        </div>
-
-        {/* Avatar */}
-        <div className="relative" ref={profileRef}>
-          <button
-            onClick={() => { setShowProfile(!showProfile); setShowNotif(false); }}
-            className="w-[34px] h-[34px] rounded-full flex items-center justify-center text-[13px] font-semibold text-white transition-all duration-150"
-            style={{ background: 'var(--blue)' }}
-            onMouseEnter={e => (e.currentTarget.style.boxShadow = '0 0 0 2px var(--blue-subtle)')}
-            onMouseLeave={e => (e.currentTarget.style.boxShadow = 'none')}
-            id="avatar-button"
+          <button 
+            onClick={toggleSearch}
+            className={`w-10 h-10 flex items-center justify-center rounded-lg transition-colors duration-150 relative z-10
+              ${isSearchOpen ? 'opacity-0' : 'text-[#6B7280] hover:bg-[#F9FAFB]'}`}
+            aria-label="Open search"
           >
-            {studentInfo.initials}
-            <span
-              className="absolute bottom-0 right-0 w-2 h-2 rounded-full"
-              style={{ background: 'var(--green)', border: '2px solid white' }}
-            />
+            <Search size={20} />
+          </button>
+        </div>
+
+        {/* Notifications */}
+        <div className="relative">
+          <button 
+            onClick={() => setShowNotifications(true)}
+            className="w-10 h-10 flex items-center justify-center rounded-lg text-[#6B7280] hover:bg-[#F9FAFB] transition-colors duration-150 relative"
+            aria-label="Notifications, 3 unread"
+          >
+            <Bell size={20} />
+            <span className="absolute top-2 right-2 w-[18px] h-[18px] bg-[#EF4444] rounded-full border-2 border-white flex items-center justify-center text-[10px] font-semibold text-white font-outfit animate-in zoom-in duration-300">
+              3
+            </span>
+          </button>
+        </div>
+
+        <div className="w-[1px] h-5 bg-[#E5E7EB]" />
+
+        {/* Student Profile */}
+        <div className="flex items-center gap-3 relative">
+          <div className="text-right hidden sm:block">
+            <p className="text-[13px] font-semibold text-[#374151] font-outfit">Aditya</p>
+            <p className="text-[11px] text-[#9CA3AF] font-mono">{studentInfo.rollNo}</p>
+          </div>
+          <button 
+            onClick={() => navigate('/student/profile')}
+            className="flex items-center gap-2 group cursor-pointer"
+          >
+            <div className="w-8 h-8 rounded-full bg-[#1A56DB] flex items-center justify-center text-[11px] font-semibold text-white font-outfit border-2 border-transparent transition-all group-hover:border-[#1A56DB]/20 relative">
+              {studentInfo.initials}
+              <div className="absolute right-0 bottom-0 w-2.5 h-2.5 bg-[#10B981] border-2 border-white rounded-full group-hover:scale-110 transition-transform" />
+            </div>
           </button>
 
           <AnimatePresence>
             {showProfile && (
-              <>
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: 0.2 }}
-                  className="fixed inset-0 bg-black/40 z-[90] md:hidden"
-                  onClick={() => setShowProfile(false)}
-                />
-                <motion.div
+              <motion.div
                 initial={{ opacity: 0, y: 10, scale: 0.97 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: 10, scale: 0.97 }}
-                transition={{ duration: 0.2, ease: 'easeOut' }}
-                className="fixed bottom-0 left-0 right-0 w-full md:absolute md:right-0 md:top-[48px] md:bottom-auto md:w-[200px] rounded-t-2xl md:rounded-xl overflow-hidden py-1 z-[100] md:z-auto"
-                style={{
-                  background: 'var(--bg-card)',
-                  border: '1px solid var(--border-default)',
-                  boxShadow: 'var(--shadow-lg)',
-                  backgroundColor: '#ffffff'
-                }}
+                transition={{ duration: 0.2, ease: "easeOut" }}
+                className="absolute right-0 top-[48px] w-[200px] bg-white rounded-xl shadow-[0_20px_40px_rgba(0,0,0,0.12),0_0_0_1px_rgba(0,0,0,0.04)] py-1.5 z-[100]"
               >
-                <>
-                  <div className="md:hidden flex flex-col items-center py-5 border-b border-gray-100">
-                    <div className="w-[52px] h-[52px] rounded-full flex items-center justify-center text-[20px] font-semibold text-white mb-2" style={{ background: 'var(--blue)' }}>
-                      {studentInfo.initials}
-                    </div>
-                    <span className="text-[16px] font-bold text-gray-800">{studentInfo.name}</span>
-                    <span className="text-[13px] text-gray-500 font-mono mt-1">{studentInfo.rollNo}</span>
-                  </div>
-                  <div 
-                    className="px-5 md:px-4 py-0 h-[52px] md:h-auto md:py-2.5 flex items-center gap-3 md:gap-2.5 cursor-pointer transition-colors duration-[120ms] border-b border-gray-100 md:border-none"
-                    onMouseEnter={e => (e.currentTarget.style.background = '#f0f4ff')}
-                    onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
-                    onClick={() => {
-                      setShowProfile(false);
-                      navigate('/settings');
-                    }}
-                  >
-                    <User size={18} className="md:w-4 md:h-4 text-gray-500" strokeWidth={1.5} />
-                    <span className="text-[14px] md:text-[13px]" style={{ color: 'var(--text-primary)' }}>View Profile</span>
-                  </div>
-                  <div 
-                    className="px-5 md:px-4 py-0 h-[52px] md:h-auto md:py-2.5 flex items-center gap-3 md:gap-2.5 cursor-pointer transition-colors duration-[120ms] border-b border-gray-100 md:border-none"
-                    onMouseEnter={e => (e.currentTarget.style.background = '#f0f4ff')}
-                    onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
-                    onClick={() => setShowProfile(false)}
-                  >
-                    <HelpCircle size={18} className="md:w-4 md:h-4 text-gray-500" strokeWidth={1.5} />
-                    <span className="text-[14px] md:text-[13px]" style={{ color: 'var(--text-primary)' }}>Help & Support</span>
-                  </div>
-                  <div className="hidden md:block" style={{ height: '1px', background: 'var(--border-default)', margin: '4px 0' }} />
-                  <div 
-                    className="px-5 md:px-4 py-0 h-[52px] md:h-auto md:py-2.5 flex items-center gap-3 md:gap-2.5 cursor-pointer transition-colors duration-[120ms]"
-                    onMouseEnter={e => (e.currentTarget.style.background = '#fcf0f0')}
-                    onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
-                    onClick={async () => {
-                      setShowProfile(false);
-                      try {
-                        localStorage.clear();
-                        sessionStorage.clear();
-                        await logout();
-                        navigate('/login');
-                      } catch (error) {
-                        console.error('Logout failed', error);
-                        navigate('/login');
-                      }
-                    }}
-                  >
-                    <LogOut size={18} className="md:w-4 md:h-4 text-red-500" strokeWidth={1.5} />
-                    <span className="text-[14px] md:text-[13px]" style={{ color: 'var(--red)' }}>Log Out</span>
-                  </div>
-                </>
+                <button className="w-full flex items-center gap-2.5 px-4 py-2.5 hover:bg-[#F9FAFB] transition-colors text-left" onClick={() => navigate('/student/profile')}>
+                  <User size={16} className="text-[#6B7280]" />
+                  <span className="text-[13px] font-medium text-[#111827] font-outfit">View Profile</span>
+                </button>
+                <button className="w-full flex items-center gap-2.5 px-4 py-2.5 hover:bg-[#F9FAFB] transition-colors text-left">
+                  <HelpCircle size={16} className="text-[#6B7280]" />
+                  <span className="text-[13px] font-medium text-[#111827] font-outfit">Help & Support</span>
+                </button>
+                <div className="h-[1px] bg-[#E5E7EB] my-1.5" />
+                <button 
+                  className="w-full flex items-center gap-2.5 px-4 py-2.5 hover:bg-[#FEF2F2] transition-colors text-left group"
+                  onClick={async () => {
+                    await logout();
+                    navigate('/login');
+                  }}
+                >
+                  <LogOut size={16} className="text-[#EF4444]" />
+                  <span className="text-[13px] font-medium text-[#EF4444] font-outfit">Log Out</span>
+                </button>
               </motion.div>
-              </>
             )}
           </AnimatePresence>
         </div>
       </div>
-    </motion.nav>
+
+      {/* Notification Drawer */}
+      <AnimatePresence>
+        {showNotifications && (
+          <>
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowNotifications(false)}
+              className="fixed inset-0 bg-black/20 z-[60]"
+            />
+            <motion.div
+              initial={{ x: 360 }}
+              animate={{ x: 0 }}
+              exit={{ x: 360 }}
+              transition={{ type: "spring", stiffness: 300, damping: 30 }}
+              className="fixed top-0 right-0 h-full w-[360px] bg-white shadow-[-4px_0_32px_rgba(0,0,0,0.12)] border-l border-[#E5E7EB] z-[70] flex flex-col"
+            >
+              <div className="px-5 h-16 flex items-center justify-between border-b border-[#E5E7EB]">
+                <h2 className="text-[16px] font-semibold text-[#111827] font-outfit">Notifications</h2>
+                <div className="flex items-center gap-4">
+                  <button className="text-[12px] font-medium text-[#6B7280] hover:text-[#374151] font-outfit">Mark all as read</button>
+                  <button onClick={() => setShowNotifications(false)} className="text-[#9CA3AF] hover:text-[#6B7280]">
+                    <X size={20} />
+                  </button>
+                </div>
+              </div>
+
+              <div className="flex-1 overflow-y-auto custom-scrollbar">
+                <div className="px-5 py-3 text-[10px] font-semibold text-[#9CA3AF] uppercase tracking-wider font-outfit bg-[#F9FAFB]/50">Today</div>
+                <div className="flex flex-col">
+                  {notifications.slice(0, 3).map((n, i) => (
+                    <NotificationItem key={i} n={n} />
+                  ))}
+                </div>
+                
+                <div className="px-5 py-3 text-[10px] font-semibold text-[#9CA3AF] uppercase tracking-wider font-outfit bg-[#F9FAFB]/50 border-t border-[#E5E7EB]">Earlier</div>
+                <div className="flex flex-col">
+                  {notifications.slice(3).map((n, i) => (
+                    <NotificationItem key={i} n={n} />
+                  ))}
+                </div>
+
+                {notifications.length === 0 && (
+                  <div className="flex flex-col items-center justify-center p-12 text-center">
+                    <CheckCircle size={32} className="text-[#D1D5DB] mb-3" />
+                    <p className="text-[13px] text-[#6B7280] font-outfit">You're all caught up</p>
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+    </header>
+  );
+};
+
+const NotificationItem = ({ n }: { n: any }) => {
+  const stripeColors: Record<string, string> = {
+    red: '#EF4444',
+    blue: '#1A56DB',
+    purple: '#7C3AED',
+    green: '#10B981',
+    teal: '#0EA5E9',
+    amber: '#F59E0B'
+  };
+
+  return (
+    <div className="group relative flex gap-3 px-5 py-3.5 border-b border-[#F3F4F6] hover:bg-[#F9FAFB] transition-colors cursor-pointer bg-[#1A56DB]/[0.02]">
+      <div className="absolute left-0 top-0 bottom-0 w-[3px]" style={{ backgroundColor: stripeColors[n.type] || '#1A56DB' }} />
+      <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
+        <Bell size={14} className="text-gray-400" />
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="text-[13px] font-medium text-[#111827] font-outfit leading-snug">{n.text}</p>
+        <p className="text-[12px] text-[#6B7280] font-outfit mt-0.5 line-clamp-1">New announcement regarding Semester 6 results</p>
+        <span className="text-[11px] text-[#9CA3AF] font-outfit uppercase mt-2 block">{n.time}</span>
+      </div>
+    </div>
   );
 };
 

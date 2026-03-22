@@ -17,6 +17,7 @@ const Notifications = lazy(() => import('./pages/Notifications'));
 const Access = lazy(() => import('./pages/Access'));
 const Settings = lazy(() => import('./pages/Settings'));
 const AuditLogs = lazy(() => import('./pages/AuditLogs'));
+const AdminExternalMarks = lazy(() => import('./pages/AdminExternalMarks'));
 
 const PageSkeleton = () => (
   <div className="adm-root" style={{ padding: '24px' }}>
@@ -44,6 +45,7 @@ const AdminRoutes = () => (
             <Route path="access"                 element={<Access />} />
             <Route path="settings"               element={<Settings />} />
             <Route path="audit"                  element={<AuditLogs />} />
+            <Route path="external-marks"         element={<AdminExternalMarks />} />
           </Route>
         </Routes>
       </Suspense>

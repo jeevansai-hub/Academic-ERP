@@ -1,187 +1,190 @@
 import React from 'react';
-import { motion } from 'framer-motion';
-import {
-  LayoutDashboard, FileText, BarChart2, Calendar,
-  ClipboardList, TrendingUp, AlertCircle, MessageSquare,
-  Download, Search, Settings, LogOut, X
+import { motion, AnimatePresence } from 'framer-motion';
+import { 
+  LayoutDashboard, BarChart2, Activity, CalendarCheck, 
+  ClipboardList, TrendingUp, AlertTriangle, MessageSquare, 
+  Download, Search, Settings, LogOut, ChevronRight, CalendarDays,
+  Star, Trophy, BookOpen
 } from 'lucide-react';
-import { AnimatePresence } from 'framer-motion';
-import { studentInfo } from '../../data/studentData';
 
-const navItems = [
-  { icon: LayoutDashboard, label: 'Dashboard', path: 'dashboard' },
-  { icon: FileText, label: 'Marks Overview', path: 'marks' },
-  { icon: Calendar, label: 'Weekly Test Insights', path: 'weekly' },
-  { icon: ClipboardList, label: 'Internal Assessment', path: 'internal' },
-  { icon: TrendingUp, label: 'CGPA & Progress', path: 'cgpa' },
-  { icon: AlertCircle, label: 'Backlogs & Alerts', path: 'backlogs' },
-  { icon: MessageSquare, label: 'Remarks & Feedback', path: 'remarks' },
-  { icon: Download, label: 'Reports & Downloads', path: 'reports' },
-  { icon: Search, label: 'Smart Search & Filters', path: 'search' },
-];
+import { studentInfo } from '../../data/studentData';
+import { useNavigate } from 'react-router-dom';
 
 interface SidebarProps {
   activePage: string;
-  onNavigate: (page: string) => void;
+  onNavigate?: (page: string) => void;
   isMobileOpen: boolean;
   onCloseMobile: () => void;
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ activePage, onNavigate, isMobileOpen, onCloseMobile }) => {
+  const navigate = useNavigate();
+
+  const handleNavigate = (id: string) => {
+    if (onNavigate) onNavigate(id);
+    onCloseMobile();
+
+    // Route map
+    const routes: Record<string, string> = {
+      'dashboard': '/student/dashboard',
+      'exams': '/student/exam-hub',
+      'marks': '/student/marks',
+      'analysis': '/student/analysis',
+      'weekly': '/student/weekly',
+      'internal': '/student/internal-marks',
+      'cgpa': '/student/cgpa',
+      'alerts': '/student/backlogs',
+      'interaction': '/student/academic-interaction',
+      'exam-feedback': '/student/exam-feedback',
+      'achievements': '/student/achievements',
+      'reports': '/student/reports',
+      'settings': '/student/profile',
+      'curriculum': '/student/curriculum',
+      'profile': '/student/profile'
+    };
+    
+    if (routes[id]) {
+      navigate(routes[id]);
+    }
+  };
+
+  const academicsItems = [
+    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    { id: 'marks', label: 'Marks Overview', icon: BarChart2 },
+    { id: 'internal', label: 'Internal Marks', icon: ClipboardList },
+    { id: 'cgpa', label: 'CGPA Progress', icon: TrendingUp, badge: 'New', badgeColor: 'blue' },
+    { id: 'alerts', label: 'Backlogs & Alerts', icon: AlertTriangle, badge: '5', badgeColor: 'red' },
+    { id: 'curriculum', label: 'Curriculum', icon: BookOpen },
+    { id: 'exams', label: 'Exam Hub', icon: CalendarDays, badge: '!', badgeColor: 'red' },
+    { id: 'interaction', label: 'Academic Interaction', icon: MessageSquare, badge: '5', badgeColor: 'blue' },
+    { id: 'exam-feedback', label: 'Exam Feedback', icon: Star },
+    { id: 'achievements', label: 'Achievements', icon: Trophy },
+  ];
+
+  const supportItems = [
+    { id: 'reports', label: 'Reports & Downloads', icon: Download },
+    { id: 'search', label: 'Smart Search', icon: Search },
+  ];
+
+  const NavItem = ({ item }: { item: any }) => {
+    const isActive = activePage === item.id;
+    const Icon = item.icon;
+
+    return (
+      <button
+        onClick={() => { handleNavigate(item.id); }}
+        className={`relative flex items-center gap-3 px-3 mx-2 h-11 rounded-xl transition-all duration-150 group
+          ${isActive ? 'bg-[#1A56DB] text-white' : 'text-[#A0AEC0] hover:bg-white/5 hover:text-[#E2E8F0]'}`}
+      >
+        {isActive && (
+          <div className="absolute left-[-8px] top-1/2 -translate-y-1/2 w-[3px] h-4 bg-[#60A5FA] rounded-r-sm" />
+        )}
+        <Icon size={18} strokeWidth={1.5} className={`${isActive ? 'text-white' : 'text-white/45 group-hover:text-[#E2E8F0]'}`} />
+        <span className="text-[13px] font-medium font-outfit flex-1 text-left">{item.label}</span>
+        
+        {item.badge && (
+          <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full font-outfit
+            ${item.badgeColor === 'red' ? 'bg-[#EF4444] text-white' : 'bg-[#1A56DB] text-white'}`}>
+            {item.badge}
+          </span>
+        )}
+      </button>
+    );
+  };
+
   return (
     <>
-      {/* Mobile backdrop */}
+      {/* Mobile background overlay */}
       <AnimatePresence>
         {isMobileOpen && (
           <motion.div
             initial={{ opacity: 0 }}
-            animate={{ opacity: 0.4 }}
+            animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.25 }}
-            className="fixed inset-0 bg-black z-40 lg:hidden cursor-pointer touch-none"
             onClick={onCloseMobile}
+            className="fixed inset-0 bg-black/40 z-40 lg:hidden"
           />
         )}
       </AnimatePresence>
 
-      <motion.aside
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.35, ease: 'easeOut', delay: 0.05 }}
-        className={`fixed top-[56px] left-0 w-[220px] overflow-hidden flex flex-col z-40
-          ${isMobileOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 transition-transform duration-300`}
-        style={{
-          height: 'calc(100vh - 56px)',
-          background: 'var(--bg-card)',
-          borderRight: '1px solid var(--border-default)',
-          boxShadow: 'var(--shadow-xs)',
-        }}
-      >
-        {/* Mobile close button */}
-        <button
-          onClick={onCloseMobile}
-          className="lg:hidden absolute top-2 right-2 p-2.5 z-50 rounded-full bg-white/5 cursor-pointer touch-manipulation hover:bg-white/10"
-          style={{ color: 'var(--text-primary)' }}
-          aria-label="Close Sidebar"
-        >
-          <X size={20} strokeWidth={2} />
+      <aside className={`fixed top-0 left-0 h-screen w-[240px] bg-[#0C2461] border-r border-white/5 shadow-[2px_0_8px_rgba(0,0,0,0.15)] z-50 flex flex-col transition-transform duration-300 lg:translate-x-0 
+        ${isMobileOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+        
+        {/* Logo Block */}
+        <div className="p-5 pb-4">
+          <div className="inline-flex items-center gap-2.5 px-2.5 py-1.5 bg-[#1A56DB]/25 border border-[#1A56DB]/45 rounded-lg">
+            <div className="w-1.5 h-1.5 bg-[#34D399] rounded-full animate-pulse shadow-[0_0_8px_rgba(52,211,153,0.5)]" />
+            <span className="text-[12px] font-semibold font-outfit uppercase tracking-[0.1em] text-[#93C5FD]">ECAP</span>
+          </div>
+          <div className="mt-4">
+            <h1 className="text-[14px] font-medium font-outfit text-white">Student Portal</h1>
+            <p className="text-[11px] text-[#718096] font-outfit mt-0.5">Academic Intelligence</p>
+          </div>
+        </div>
+
+        {/* Student Identity Block */}
+        <button onClick={() => handleNavigate('profile')} className="px-5 py-4 border-b border-white/10 flex items-center gap-3 w-full text-left hover:bg-white/5 transition-colors cursor-pointer group">
+          <div className="w-11 h-11 rounded-full bg-[#1A56DB] flex items-center justify-center text-[16px] font-semibold text-white font-outfit relative">
+            {studentInfo.initials}
+            <div className="absolute right-0 bottom-0 w-3 h-3 bg-[#10B981] border-2 border-[#0C2461] rounded-full group-hover:scale-110 transition-transform"/>
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="text-[14px] font-semibold text-white truncate font-outfit group-hover:text-[#93C5FD] transition-colors">{studentInfo.name}</p>
+            <p className="text-[12px] text-[#A0AEC0] font-outfit truncate mt-0.5">Computer Science · Sem {studentInfo.semester}</p>
+            <p className="text-[11px] text-[#718096] font-outfit mt-0.5">{studentInfo.rollNo}</p>
+          </div>
         </button>
 
-        {/* Student mini-profile */}
-        <div className="p-4 pb-3" style={{ borderBottom: '1px solid var(--border-faint)' }}>
-          <div className="flex items-center gap-3">
-            <div className="relative w-9 h-9 rounded-full flex items-center justify-center text-[12px] font-semibold text-white flex-shrink-0"
-              style={{ background: 'var(--blue)' }}>
-              {studentInfo.initials}
-              <span className="absolute bottom-0 right-0 w-2 h-2 rounded-full pulse-dot"
-                style={{ background: 'var(--green)', border: '2px solid white' }} />
+        {/* Navigation Section */}
+        <div className="flex-1 overflow-y-auto pt-4 space-y-6 custom-scrollbar">
+          <div>
+            <p className="px-5 mb-2 text-[10px] font-semibold text-white/30 uppercase tracking-[0.12em] font-outfit">ACADEMICS</p>
+            <div className="flex flex-col gap-0.5">
+              {academicsItems.map(item => <NavItem key={item.id} item={item} />)}
             </div>
-            <div className="min-w-0">
-              <p className="text-[13px] font-semibold truncate" style={{ color: 'var(--text-primary)' }}>{studentInfo.name}</p>
-              <p className="text-[11px] truncate" style={{ color: 'var(--text-muted)' }}>
-                {studentInfo.department.split(' & ')[0]} · Sem {studentInfo.semester}
-              </p>
+          </div>
+
+          <div>
+            <p className="px-5 mb-2 text-[10px] font-semibold text-white/30 uppercase tracking-[0.12em] font-outfit">SUPPORT</p>
+            <div className="flex flex-col gap-0.5">
+              {supportItems.map(item => <NavItem key={item.id} item={item} />)}
             </div>
           </div>
         </div>
 
-        {/* Nav section */}
-        <div className="flex-1 overflow-y-auto py-3 px-2">
-          <p className="text-[9px] font-medium tracking-[2px] uppercase px-2 mb-1.5"
-            style={{ color: 'var(--text-muted)' }}>
-            ACADEMICS
-          </p>
-          <nav className="flex flex-col gap-0.5">
-            {navItems.map(item => {
-              const isActive = activePage === item.path;
-              const Icon = item.icon;
-              return (
-                <button
-                  key={item.path}
-                  onClick={() => { onNavigate(item.path); onCloseMobile(); }}
-                  className="relative flex items-center gap-2.5 px-3 py-[9px] rounded-lg text-left w-full transition-all duration-150"
-                  style={{
-                    background: isActive ? 'var(--blue-light)' : 'transparent',
-                    borderLeft: isActive ? '2px solid var(--blue)' : '2px solid transparent',
-                  }}
-                  onMouseEnter={e => {
-                    if (!isActive) {
-                      e.currentTarget.style.background = 'var(--bg-hover)';
-                      e.currentTarget.style.transform = 'translateX(2px)';
-                    }
-                  }}
-                  onMouseLeave={e => {
-                    if (!isActive) {
-                      e.currentTarget.style.background = 'transparent';
-                      e.currentTarget.style.transform = 'translateX(0)';
-                    }
-                  }}
-                  id={`nav-${item.path}`}
-                >
-                  {isActive && (
-                    <motion.div
-                      layoutId="sidebarActive"
-                      className="absolute inset-0 rounded-lg"
-                      style={{
-                        background: 'var(--blue-light)',
-                        borderLeft: '2px solid var(--blue)',
-                        zIndex: 0,
-                      }}
-                      transition={{ type: 'spring', stiffness: 380, damping: 38 }}
-                    />
-                  )}
-                  <Icon
-                    size={16}
-                    strokeWidth={1.5}
-                    className="relative z-10 transition-colors duration-150"
-                    style={{ color: isActive ? 'var(--blue)' : 'var(--text-muted)' }}
-                  />
-                  <span
-                    className="relative z-10 text-[13px] transition-colors duration-150"
-                    style={{
-                      color: isActive ? 'var(--blue)' : 'var(--text-secondary)',
-                      fontWeight: isActive ? 600 : 500,
-                    }}
-                  >
-                    {item.label}
-                  </span>
-                </button>
-              );
-            })}
-          </nav>
+        {/* Bottom Section */}
+        <div className="p-5 border-t border-white/10 bg-[#0C2461]/50">
+          <div className="mb-4">
+            <p className="text-[10px] uppercase text-[#718096] font-semibold tracking-wider font-outfit">CURRENT CGPA</p>
+            <p className="text-[20px] font-semibold text-white font-mono mt-0.5">8.04</p>
+          </div>
+          <div className="space-y-2">
+            <div className="flex justify-between text-[11px] font-outfit">
+              <span className="text-[#A0AEC0]">Sem 6 · Week 11/18</span>
+              <span className="text-[#1A56DB] font-medium">61.1%</span>
+            </div>
+            <div className="h-1 bg-white/15 rounded-full overflow-hidden">
+              <motion.div 
+                initial={{ width: 0 }}
+                animate={{ width: '61.1%' }}
+                transition={{ duration: 0.7, ease: "easeOut" }}
+                className="h-full bg-[#1A56DB]"
+              />
+            </div>
+          </div>
+          
+          <div className="mt-6 flex flex-col gap-1">
+            <button className="flex items-center gap-3 px-3 h-10 rounded-xl text-[#A0AEC0] hover:bg-white/5 hover:text-[#E2E8F0] transition-all">
+              <Settings size={18} strokeWidth={1.5} />
+              <span className="text-[13px] font-medium font-outfit">Settings</span>
+            </button>
+            <button className="flex items-center gap-3 px-3 h-10 rounded-xl text-[#A0AEC0] hover:bg-[#EF4444]/10 hover:text-[#FC8181] transition-all">
+              <LogOut size={18} strokeWidth={1.5} />
+              <span className="text-[13px] font-medium font-outfit">Log Out</span>
+            </button>
+          </div>
         </div>
-
-        {/* Bottom section */}
-        <div className="px-2 pb-3 pt-1" style={{ borderTop: '1px solid var(--border-faint)' }}>
-          <button
-            onClick={() => { onNavigate('profile'); onCloseMobile(); }}
-            className="flex items-center gap-2.5 px-3 py-[9px] rounded-lg w-full transition-all duration-150"
-            onMouseEnter={e => { e.currentTarget.style.background = 'var(--bg-hover)'; }}
-            onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}
-            id="nav-settings"
-          >
-            <Settings size={16} strokeWidth={1.5} style={{ color: 'var(--text-muted)' }} />
-            <span className="text-[13px] font-medium" style={{ color: 'var(--text-secondary)' }}>Settings</span>
-          </button>
-          <button
-            className="flex items-center gap-2.5 px-3 py-[9px] rounded-lg w-full transition-all duration-150"
-            onMouseEnter={e => {
-              e.currentTarget.style.background = 'var(--bg-hover)';
-              (e.currentTarget.querySelector('svg') as SVGElement).style.color = 'var(--red)';
-              (e.currentTarget.querySelector('span') as HTMLSpanElement).style.color = 'var(--red)';
-            }}
-            onMouseLeave={e => {
-              e.currentTarget.style.background = 'transparent';
-              (e.currentTarget.querySelector('svg') as SVGElement).style.color = 'var(--text-muted)';
-              (e.currentTarget.querySelector('span') as HTMLSpanElement).style.color = 'var(--text-secondary)';
-            }}
-            id="nav-logout"
-          >
-            <LogOut size={16} strokeWidth={1.5} style={{ color: 'var(--text-muted)' }} />
-            <span className="text-[13px] font-medium" style={{ color: 'var(--text-secondary)' }}>Log Out</span>
-          </button>
-        </div>
-      </motion.aside>
+      </aside>
     </>
   );
 };

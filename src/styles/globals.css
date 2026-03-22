@@ -3,89 +3,40 @@
 @tailwind utilities;
 
 :root {
-  /* ═══ OLD LOGIN PAGE VARIABLES ═══ */
-  --blue-deep: #0C2461;
-  --blue-mid: #1A4494;
-  --blue-accent: #1E6EF5;
-  --blue-sky: #5B9BFF;
-  --blue-ice: #E8F1FF;
-  --blue-pale: #F0F5FF;
-  --bg-offwhite: #F7F9FC;
-  --white: #FFFFFF;
-  --charcoal: #374151;
-  --slate-cool: #94A3B8;
-  --border-bluegrey: #DDE5F0;
-  --error: #EF4444;
-  --success: #16A34A;
-  --warning: #F59E0B;
-  --role-student: #2563EB;
-  --role-faculty: #6D28D9;
-  --role-admin: #B45309;
-  --radius-xs: 5px;
-  --radius-sm: 10px;
-  --radius-md: 14px;
-  --radius-lg: 20px;
-  --radius-full: 100px;
-  --panel-pad-y: 48px;
-  --panel-pad-x: 52px;
-  --card-max-w: 420px;
-  --input-h: 50px;
-  --btn-h-lg: 52px;
-  --btn-h-sm: 46px;
-  --field-gap: 18px;
-  --section-gap: 36px;
-
-  /* ═══ ECAP STUDENT PORTAL VARIABLES ═══ */
-  /* Background */
-  --bg-page: #f4f6f9;
-  --bg-card: #ffffff;
-  --bg-subtle: #f8fafc;
-  --bg-hover: #f1f5f9;
-
-  /* Borders */
-  --border-default: #e2e8f0;
-  --border-strong: #cbd5e1;
-  --border-focus: #2563eb;
-  --border-faint: #f1f5f9;
-
+  /* ═══ DESIGN SYSTEM COLORS ═══ */
+  --bg-page: #F9FAFB;
+  --bg-card: #FFFFFF;
+  --border-default: #E5E7EB;
+  --bg-sidebar: #0C2461;
+  --sidebar-active: #1A56DB;
+  
   /* Text */
-  --text-primary: #0f172a;
-  --text-secondary: #475569;
-  --text-muted: #94a3b8;
-  --text-label: #64748b;
+  --text-primary: #111827;
+  --text-secondary: #6B7280;
+  --text-tertiary: #9CA3AF;
+  --text-muted: #D1D5DB;
+  
+  /* Accents */
+  --blue: #1A56DB;
+  --blue-hover: #1648C0;
+  --green: #10B981;
+  --amber: #F59E0B;
+  --red: #EF4444;
+  --teal: #0EA5E9;
+  --violet: #7C3AED;
+  --indigo: #6366F1;
 
-  /* Brand */
-  --blue: #2563eb;
-  --blue-light: #eff6ff;
-  --blue-subtle: #dbeafe;
+  /* Shadow system */
+  --shadow-xs: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-lg: 0 10px 25px rgba(0,0,0,0.10), 0 4px 10px rgba(0,0,0,0.06);
+  --shadow-popover: 0 20px 40px rgba(0,0,0,0.12), 0 0 0 1px rgba(0,0,0,0.04);
+  --shadow-modal: 0 24px 48px rgba(0,0,0,0.16);
+  --shadow-banner: 0 4px 24px rgba(12,36,97,0.18);
+  --shadow-drawer: -4px 0 32px rgba(0,0,0,0.12);
 
-  /* Status */
-  --green: #16a34a;
-  --green-light: #f0fdf4;
-  --red: #dc2626;
-  --red-light: #fef2f2;
-  --amber: #d97706;
-  --amber-light: #fffbeb;
-  --purple: #7c3aed;
-  --purple-light: #f5f3ff;
-
-  /* Grades */
-  --grade-aplus: #059669;
-  --grade-a: #2563eb;
-  --grade-b: #7c3aed;
-  --grade-c: #d97706;
-  --grade-f: #dc2626;
-
-  /* Shadows */
-  --shadow-xs: 0 1px 2px rgba(0,0,0,0.04);
-  --shadow-sm: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
-  --shadow-md: 0 4px 6px rgba(0,0,0,0.05), 0 2px 4px rgba(0,0,0,0.04);
-  --shadow-lg: 0 10px 15px rgba(0,0,0,0.07), 0 4px 6px rgba(0,0,0,0.04);
-  --shadow-focus: 0 0 0 3px rgba(37,99,235,0.12);
-
-  /* Layout */
-  --sidebar-width: 220px;
-  --navbar-height: 56px;
+  /* Animation */
+  --ease-default: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 * {
@@ -95,28 +46,47 @@
 }
 
 body {
-  font-family: 'DM Sans', 'Outfit', sans-serif;
-  color: var(--charcoal);
-  background-color: var(--bg-offwhite);
+  font-family: 'Outfit', sans-serif;
+  color: var(--text-primary);
+  background-color: var(--bg-page);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   overflow-x: hidden;
 }
 
-img, chart, table, svg, canvas {
-  max-width: 100%;
-}
+/* Font classes */
+.font-outfit { font-family: 'Outfit', sans-serif; }
+.font-fraunces { font-family: 'Fraunces', serif; }
+.font-mono { font-family: 'DM Mono', monospace; }
 
 /* Scrollbar */
-::-webkit-scrollbar { width: 6px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: rgba(255,255,255,0.15); }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.30); border-radius: 2px; }
 
-/* Font classes */
-.font-title { font-family: 'Cormorant Garamond', serif; font-weight: 600; }
-.font-body { font-family: 'DM Sans', 'Outfit', sans-serif; }
-.font-mono { font-family: 'JetBrains Mono', monospace; }
+/* Animation Utility */
+.animate-load {
+  animation: page-load 300ms var(--ease-default) forwards;
+  opacity: 0;
+  transform: translateY(16px);
+}
+
+@keyframes page-load {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.pulse-red {
+  animation: pulse-red 2.5s infinite;
+}
+
+@keyframes pulse-red {
+  0% { box-shadow: 0 0 0 0 rgba(239,68,68,0.4); }
+  70% { box-shadow: 0 0 0 10px rgba(239,68,68,0); }
+  100% { box-shadow: 0 0 0 0 rgba(239,68,68,0); }
+}
 
 @media (prefers-reduced-motion: reduce) {
   * {

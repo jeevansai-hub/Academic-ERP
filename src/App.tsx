@@ -3,6 +3,17 @@ import { AuthProvider } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { LoginPage } from './pages/auth/LoginPage';
 import StudentDashboard from './pages/student/StudentDashboard';
+import MarksOverview from './pages/student/MarksOverview';
+import CGPAProgress from './pages/student/CGPAProgress';
+import BacklogsAlerts from './pages/student/BacklogsAlerts';
+import InternalExternalMarks from './pages/student/InternalExternalMarks';
+import ExamHub from './pages/student/ExamHub';
+import AcademicInteraction from './pages/student/AcademicInteraction';
+import ExamFeedback from './pages/student/ExamFeedback';
+import Achievements from './pages/student/Achievements';
+import Curriculum from './pages/student/Curriculum';
+import ReportsDownloads from './pages/student/ReportsDownloads';
+import ProfileSettings from './pages/student/ProfileSettings';
 import ScrollToTop from './components/common/ScrollToTop';
 import ProtectedRoute from './components/common/ProtectedRoute';
 
@@ -37,6 +48,94 @@ function App() {
               element={
                 <ProtectedRoute allowedRole="student">
                   <StudentDashboard />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/student/marks" 
+              element={
+                <ProtectedRoute allowedRole="student">
+                  <MarksOverview />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/student/cgpa" 
+              element={
+                <ProtectedRoute allowedRole="student">
+                  <CGPAProgress />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/student/backlogs" 
+              element={
+                <ProtectedRoute allowedRole="student">
+                  <BacklogsAlerts />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/student/internal-marks" 
+              element={
+                <ProtectedRoute allowedRole="student">
+                  <InternalExternalMarks />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/student/exam-hub" 
+              element={
+                <ProtectedRoute allowedRole="student">
+                  <ExamHub />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/student/academic-interaction" 
+              element={
+                <ProtectedRoute allowedRole="student">
+                  <AcademicInteraction />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/student/exam-feedback" 
+              element={
+                <ProtectedRoute allowedRole="student">
+                  <ExamFeedback />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/student/achievements" 
+              element={
+                <ProtectedRoute allowedRole="student">
+                  <Achievements />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/student/curriculum" 
+              element={
+                <ProtectedRoute allowedRole="student">
+                  <Curriculum />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/student/reports" 
+              element={
+                <ProtectedRoute allowedRole="student">
+                  <ReportsDownloads />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/student/profile" 
+              element={
+                <ProtectedRoute allowedRole="student">
+                  <ProfileSettings />
                 </ProtectedRoute>
               } 
             />
