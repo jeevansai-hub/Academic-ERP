@@ -9,6 +9,7 @@ import {
 
 import { studentInfo } from '../../data/studentData';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
 
 interface SidebarProps {
   activePage: string;
@@ -92,6 +93,8 @@ const Sidebar: React.FC<SidebarProps> = ({ activePage, onNavigate, isMobileOpen,
     );
   };
 
+  const { logout, userProfile } = useAuth();
+  
   return (
     <>
       {/* Mobile background overlay */}
@@ -125,13 +128,13 @@ const Sidebar: React.FC<SidebarProps> = ({ activePage, onNavigate, isMobileOpen,
         {/* Student Identity Block */}
         <button onClick={() => handleNavigate('profile')} className="px-5 py-4 border-b border-white/10 flex items-center gap-3 w-full text-left hover:bg-white/5 transition-colors cursor-pointer group">
           <div className="w-11 h-11 rounded-full bg-[#1A56DB] flex items-center justify-center text-[16px] font-semibold text-white font-outfit relative">
-            {studentInfo.initials}
+            {(userProfile as any)?.initials || userProfile?.name?.[0] || studentInfo.initials}
             <div className="absolute right-0 bottom-0 w-3 h-3 bg-[#10B981] border-2 border-[#0C2461] rounded-full group-hover:scale-110 transition-transform"/>
           </div>
           <div className="min-w-0 flex-1">
-            <p className="text-[14px] font-semibold text-white truncate font-outfit group-hover:text-[#93C5FD] transition-colors">{studentInfo.name}</p>
-            <p className="text-[12px] text-[#A0AEC0] font-outfit truncate mt-0.5">Computer Science · Sem {studentInfo.semester}</p>
-            <p className="text-[11px] text-[#718096] font-outfit mt-0.5">{studentInfo.rollNo}</p>
+            <p className="text-[14px] font-semibold text-white truncate font-outfit group-hover:text-[#93C5FD] transition-colors">{userProfile?.name || studentInfo.name}</p>
+            <p className="text-[12px] text-[#A0AEC0] font-outfit truncate mt-0.5">Computer Science · Sem {userProfile?.semester || studentInfo.semester}</p>
+            <p className="text-[11px] text-[#718096] font-outfit mt-0.5">{userProfile?.rollNo || "No Roll Number Set"}</p>
           </div>
         </button>
 
@@ -174,11 +177,20 @@ const Sidebar: React.FC<SidebarProps> = ({ activePage, onNavigate, isMobileOpen,
           </div>
           
           <div className="mt-6 flex flex-col gap-1">
-            <button className="flex items-center gap-3 px-3 h-10 rounded-xl text-[#A0AEC0] hover:bg-white/5 hover:text-[#E2E8F0] transition-all">
+            <button 
+              onClick={() => handleNavigate('profile')}
+              className="flex items-center gap-3 px-3 h-10 rounded-xl text-[#A0AEC0] hover:bg-white/5 hover:text-[#E2E8F0] transition-all"
+            >
               <Settings size={18} strokeWidth={1.5} />
               <span className="text-[13px] font-medium font-outfit">Settings</span>
             </button>
-            <button className="flex items-center gap-3 px-3 h-10 rounded-xl text-[#A0AEC0] hover:bg-[#EF4444]/10 hover:text-[#FC8181] transition-all">
+            <button 
+              onClick={async () => {
+                await logout();
+                navigate('/login');
+              }}
+              className="flex items-center gap-3 px-3 h-10 rounded-xl text-[#A0AEC0] hover:bg-[#EF4444]/10 hover:text-[#FC8181] transition-all"
+            >
               <LogOut size={18} strokeWidth={1.5} />
               <span className="text-[13px] font-medium font-outfit">Log Out</span>
             </button>

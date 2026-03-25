@@ -23,9 +23,11 @@ export const facultyStats = {
 };
 
 export const assignedSubjects = [
-  { code: 'CS601', name: 'Machine Learning', students: 60, testsDone: 14, avgScore: 18.2, color: '#1a56db' },
-  { code: 'MA601', name: 'Mathematics', students: 60, testsDone: 12, avgScore: 11.4, color: '#f59e0b' },
-  { code: 'CS603', name: 'Software Testing', students: 60, testsDone: 16, avgScore: 19.3, color: '#8b5cf6' },
+  { code: 'CS601', name: 'Software Engineering', students: 60, testsDone: 14, avgScore: 18.2, color: '#1a56db' },
+  { code: 'CS602', name: 'Operating Systems', students: 60, testsDone: 11, avgScore: 17.5, color: '#10b981' },
+  { code: 'CS603', name: 'Database Management Systems', students: 60, testsDone: 16, avgScore: 19.3, color: '#8b5cf6' },
+  { code: 'MA601', name: 'Engineering Mathematics', students: 60, testsDone: 12, avgScore: 11.4, color: '#f59e0b' },
+  { code: 'EC601', name: 'Digital Circuits', students: 60, testsDone: 15, avgScore: 16.8, color: '#ec4899' },
 ];
 
 export const facultyRecentActivity = [
@@ -45,8 +47,10 @@ export const facultyAlerts = [
 
 export const classAverageThisWeek = [
   { subject: 'CS601', avg: 18.2, lastWeek: 17.4, students: 60 },
-  { subject: 'MA601', avg: 11.4, lastWeek: 12.6, students: 60 },
+  { subject: 'CS602', avg: 17.5, lastWeek: 17.0, students: 60 },
   { subject: 'CS603', avg: 19.3, lastWeek: 19.3, students: 60 },
+  { subject: 'MA601', avg: 11.4, lastWeek: 12.6, students: 60 },
+  { subject: 'EC601', avg: 16.8, lastWeek: 15.9, students: 60 },
 ];
 
 export const topPerformers = [
@@ -59,6 +63,7 @@ export const topPerformers = [
 
 export const upcomingAssessments = [
   { subject: 'CS601', name: 'Weekly Test 8', date: '15 Mar', section: 'A', daysLeft: 2, color: '#1a56db' },
+  { subject: 'CS602', name: 'Mid 1', date: '16 Mar', section: 'B', daysLeft: 3, color: '#10b981' },
   { subject: 'MA601', name: 'Internal 2', date: '18 Mar', section: 'Both', daysLeft: 5, color: '#f59e0b' },
-  { subject: 'CS603', name: 'Lab Viva', date: '21 Mar', section: 'B', daysLeft: 8, color: '#8b5cf6' },
+  { subject: 'EC601', name: 'Lab Viva', date: '21 Mar', section: 'B', daysLeft: 8, color: '#ec4899' },
 ];

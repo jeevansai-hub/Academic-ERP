@@ -115,7 +115,7 @@ const Navbar: React.FC<NavbarProps> = ({ onMenuClick, isMenuOpen }) => {
             <p className="text-[11px] text-[#9CA3AF] font-mono">{studentInfo.rollNo}</p>
           </div>
           <button 
-            onClick={() => navigate('/student/profile')}
+            onClick={() => setShowProfile(!showProfile)}
             className="flex items-center gap-2 group cursor-pointer"
           >
             <div className="w-8 h-8 rounded-full bg-[#1A56DB] flex items-center justify-center text-[11px] font-semibold text-white font-outfit border-2 border-transparent transition-all group-hover:border-[#1A56DB]/20 relative">

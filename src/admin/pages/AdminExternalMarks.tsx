@@ -3,9 +3,11 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Users, CheckCircle2, AlertTriangle, EyeOff, Eye, Search, 
   Download, Upload, Send, FileText, CheckCircle, Flag,
-  Edit2, ChevronDown, ChevronRight, Inbox, Clock, ChevronUp
+  Edit2, ChevronDown, ChevronRight, Clock, ChevronUp
 } from 'lucide-react';
 import { useAdmin } from '../context/AdminContext';
+import { useExternalMarksAdmin, usePublishStatus, useSaveMarks } from '../../hooks/useMarks';
+import { useAuth } from '../../context/AuthContext';
 
 interface StudentResult {
   id: string;
@@ -24,30 +26,22 @@ interface StudentResult {
   selected?: boolean;
 }
 
-const initialResults: StudentResult[] = [
-  { id: '1', rollNo: 'VIIT21CS001', name: 'Rajesh Kumar', initials: 'RK', section: 'A', int: 24, ext: 54, total: 78, grade: 'B', result: 'PASS', status: 'Verified' },
-  { id: '2', rollNo: 'VIIT21CS002', name: 'Priya Singh', initials: 'PS', section: 'A', int: 27, ext: 62, total: 89, grade: 'A', result: 'PASS', status: 'Verified' },
-  { id: '3', rollNo: 'VIIT21CS003', name: 'Arun Mehra', initials: 'AM', section: 'A', int: 21, ext: 48, total: 69, grade: 'C', result: 'PASS', status: 'Uploaded' },
-  { id: '4', rollNo: 'VIIT21CS004', name: 'Sonal Verma', initials: 'SV', section: 'A', int: 18, ext: 41, total: 59, grade: 'D', result: 'PASS', status: 'Flagged', flagReason: 'EXT marks mismatch with answer sheet scan' },
-  { id: '5', rollNo: 'VIIT21CS005', name: 'Kiran Patel', initials: 'KP', section: 'B', int: 25, ext: 58, total: 83, grade: 'A', result: 'PASS', status: 'Verified' },
-  { id: '6', rollNo: 'VIIT21CS006', name: 'Neha Gupta', initials: 'NG', section: 'B', int: 20, ext: 44, total: 64, grade: 'C', result: 'PASS', status: 'Uploaded' },
-  { id: '7', rollNo: 'VIIT21CS007', name: 'Suresh Reddy', initials: 'SR', section: 'B', int: 16, ext: 25, total: 41, grade: 'E', result: 'FAIL', status: 'Flagged', flagReason: 'Below minimum EXT passing marks (28/70)' },
-  { id: '8', rollNo: 'VIIT21CS008', name: 'Divya Sharma', initials: 'DS', section: 'B', int: 26, ext: 60, total: 86, grade: 'A', result: 'PASS', status: 'Verified' },
-  ...Array.from({ length: 4 }, (_, i) => ({
-    id: `p${i}`, rollNo: `VIIT21CS00${i + 9}`, name: 'Pending Student', initials: 'PS', section: 'B', int: null, ext: null, total: null, grade: '—', result: 'PENDING', status: 'Pending' as const
-  }))
-];
-
 const AdminExternalMarks: React.FC = () => {
   const { showToast } = useAdmin();
-  const [results, setResults] = useState<StudentResult[]>(initialResults);
+  const { currentUser } = useAuth();
+  
+  // -- Firestore Hooks --
+  const { data: adminMarks, loading: loadingMarks } = useExternalMarksAdmin(6, "2025-26");
+  const { status: publishStatus, counts: statsCount, refetch: refetchStatus } = usePublishStatus(6, "2025-26");
+  const { saveExternal, publishExternal, saving: isSavingAction } = useSaveMarks();
+
+  const [results, setResults] = useState<StudentResult[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterSection, setFilterSection] = useState('All Sections');
   const [filterStatus, setFilterStatus] = useState('All');
-  const [isPublished, setIsPublished] = useState(false);
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [showPublishModal, setShowPublishModal] = useState(false);
-  const [uploadStep, setUploadStep] = useState(0); // 0: select, 1: processing
+  const [uploadStep, setUploadStep] = useState(0); 
   const [uploadProgress, setUploadProgress] = useState(0);
   const [publishConfirmed, setPublishConfirmed] = useState(false);
   const [flaggingId, setFlaggingId] = useState<string | null>(null);
@@ -55,10 +49,27 @@ const AdminExternalMarks: React.FC = () => {
   const [showActivityLog, setShowActivityLog] = useState(false);
   const [showBulkConfirm, setShowBulkConfirm] = useState(false);
 
+  const isPublished = publishStatus === 'published';
+
   useEffect(() => {
-    // Check initial calculations just to be safe
-    setResults(prev => prev.map(r => r.status !== 'Pending' ? calculateRowState(r) : r));
-  }, []);
+    if (adminMarks) {
+      const mapped = adminMarks.map((m) => ({
+        id: `${m.studentId}_${m.subjectCode}`,
+        rollNo: m.studentId,
+        name: m.name || 'Student Name',
+        initials: m.initials || 'SN',
+        section: m.section || 'A',
+        int: m.internalMarks,
+        ext: m.externalMarks,
+        total: m.total,
+        grade: m.grade,
+        result: m.result.toUpperCase(),
+        status: m.verificationStatus.charAt(0).toUpperCase() + m.verificationStatus.slice(1) as any,
+        flagReason: m.flagReason
+      }));
+      setResults(mapped);
+    }
+  }, [adminMarks]);
 
   const calculateRowState = (row: StudentResult): StudentResult => {
     if (row.int === null || row.ext === null || row.int === '' as any || row.ext === '' as any) {
@@ -83,9 +94,30 @@ const AdminExternalMarks: React.FC = () => {
     setResults(prev => prev.map(r => r.id === id ? { ...r, isEditing: !r.isEditing } : r));
   };
 
-  const handleVerifyRow = (id: string) => {
-    setResults(prev => prev.map(r => r.id === id ? { ...r, status: 'Verified', isEditing: false, flagReason: undefined } : r));
-    showToast('Result marked as verified', 'success');
+  const handleVerifyRow = async (id: string) => {
+    const row = results.find(r => r.id === id);
+    if (!row || isSavingAction) return;
+    try {
+      await saveExternal({
+        subjectCode: row.id.split('_')[1],
+        section: row.section,
+        semester: 6,
+        academicYear: "2025-26",
+        uploadedBy: currentUser?.uid || 'admin',
+        publishStatus: isPublished ? 'published' : 'draft',
+        entries: [{ 
+            studentId: row.rollNo, 
+            internalMarks: row.int || 0, 
+            externalMarks: row.ext || 0,
+            total: row.total || 0,
+            grade: row.grade as any,
+            result: row.result.toLowerCase() as any,
+            verificationStatus: 'verified' 
+        }]
+      });
+      setResults(prev => prev.map(r => r.id === id ? { ...r, status: 'Verified', flagReason: undefined } : r));
+      showToast('Result marked as verified', 'success');
+    } catch (err) {}
   };
 
   const handleInputChange = (id: string, field: 'int' | 'ext', value: string) => {
@@ -106,12 +138,35 @@ const AdminExternalMarks: React.FC = () => {
     }));
   };
 
-  const saveFlagReason = () => {
-    if (!flaggingId || !flagInput.trim()) return;
-    setResults(prev => prev.map(r => r.id === flaggingId ? { ...r, status: 'Flagged', flagReason: flagInput, isEditing: false } : r));
-    setFlaggingId(null);
-    setFlagInput('');
-    showToast('Result flagged successfully', 'warning');
+  const saveFlagReason = async () => {
+    if (!flaggingId || !flagInput.trim() || isSavingAction) return;
+    const row = results.find(r => r.id === flaggingId);
+    if (!row) return;
+
+    try {
+      await saveExternal({
+        subjectCode: row.id.split('_')[1],
+        section: row.section,
+        semester: 6,
+        academicYear: "2025-26",
+        uploadedBy: currentUser?.uid || 'admin',
+        publishStatus: isPublished ? 'published' : 'draft',
+        entries: [{ 
+            studentId: row.rollNo, 
+            internalMarks: row.int || 0, 
+            externalMarks: row.ext || 0,
+            total: row.total || 0,
+            grade: row.grade as any,
+            result: row.result.toLowerCase() as any,
+            verificationStatus: 'flagged',
+            flagReason: flagInput
+        }]
+      });
+      setResults(prev => prev.map(r => r.id === flaggingId ? { ...r, status: 'Flagged', flagReason: flagInput, isEditing: false } : r));
+      setFlaggingId(null);
+      setFlagInput('');
+      showToast('Result flagged successfully', 'warning');
+    } catch (err) {}
   };
 
   const toggleSelectRow = (id: string) => {
@@ -125,10 +180,41 @@ const AdminExternalMarks: React.FC = () => {
 
   const selectedCount = results.filter(r => r.selected).length;
 
-  const handleBulkVerify = () => {
-    setResults(prev => prev.map(r => (r.selected && r.status === 'Uploaded') ? { ...r, status: 'Verified', selected: false } : r));
-    setShowBulkConfirm(false);
-    showToast(`${selectedCount} results verified successfully`, 'success');
+  const handleBulkVerify = async () => {
+    const selectedRows = results.filter(r => r.selected && r.status === 'Uploaded');
+    if (selectedRows.length === 0 || isSavingAction) return;
+
+    const subjectMap: Record<string, any[]> = {};
+    selectedRows.forEach(row => {
+      const sCode = row.id.split('_')[1];
+      if (!subjectMap[sCode]) subjectMap[sCode] = [];
+      subjectMap[sCode].push({
+        studentId: row.rollNo, 
+        internalMarks: row.int || 0, 
+        externalMarks: row.ext || 0,
+        total: row.total || 0,
+        grade: row.grade as any,
+        result: row.result.toLowerCase() as any,
+        verificationStatus: 'verified' 
+      });
+    });
+
+    try {
+      for (const sCode in subjectMap) {
+        await saveExternal({
+          subjectCode: sCode,
+          section: 'All', 
+          semester: 6,
+          academicYear: "2025-26",
+          uploadedBy: currentUser?.uid || 'admin',
+          publishStatus: isPublished ? 'published' : 'draft',
+          entries: subjectMap[sCode]
+        });
+      }
+      setResults(prev => prev.map(r => (r.selected && r.status === 'Uploaded') ? { ...r, status: 'Verified', selected: false } : r));
+      setShowBulkConfirm(false);
+      showToast(`${selectedRows.length} results verified successfully`, 'success');
+    } catch (err) {}
   };
 
   const handleUploadSimulator = () => {
@@ -143,16 +229,6 @@ const AdminExternalMarks: React.FC = () => {
           setShowUploadModal(false);
           setUploadStep(0);
           setUploadProgress(0);
-          
-          setResults(prev => prev.map(r => {
-            if (r.status === 'Pending') {
-               const intT = Math.floor(Math.random() * 15) + 15;
-               const extT = Math.floor(Math.random() * 40) + 30;
-               return calculateRowState({ ...r, int: intT, ext: extT, status: 'Uploaded' });
-            }
-            return r;
-          }));
-
           showToast('Results uploaded successfully', 'success');
         }, 500);
       }
@@ -170,19 +246,21 @@ const AdminExternalMarks: React.FC = () => {
     }
   };
 
-  const handlePublishToggle = () => {
+  const handlePublishToggle = async () => {
     if (isPublished) {
-      setIsPublished(false);
-      showToast('Results unpublished', 'info');
+      showToast('Unpublishing results is currently disabled.', 'warning');
       return;
     }
     setShowPublishModal(true);
   };
 
-  const confirmPublish = () => {
-    setIsPublished(true);
-    setShowPublishModal(false);
-    showToast('Results published successfully. Students can now view their marks.', 'success');
+  const confirmPublish = async () => {
+    try {
+      await publishExternal(6, "2025-26", currentUser?.uid || 'admin');
+      await refetchStatus();
+      setShowPublishModal(false);
+      showToast('Results published successfully. Students can now view their marks.', 'success');
+    } catch (err) {}
   };
 
   const filteredResults = results.filter(r => {
@@ -192,32 +270,24 @@ const AdminExternalMarks: React.FC = () => {
     return mSearch && mSec && mStat;
   });
 
-  const statsCount = {
-    total: 124,
-    uploaded: results.filter(r => r.status !== 'Pending').length,
-    underReview: results.filter(r => r.status === 'Flagged').length,
-    verified: results.filter(r => r.status === 'Verified').length,
-    pending: 124 - results.filter(r => r.status !== 'Pending').length
-  };
-
   const canPublish = statsCount.underReview === 0 && statsCount.verified > 0 && statsCount.pending === 0;
 
   const getIntColor = (v: number | null) => {
-    if (v === null) return 'var(--t4)';
+    if (v === null) return '#9CA3AF';
     if (v >= 24) return '#22C55E';
     if (v >= 18) return '#4B5563';
     if (v >= 15) return '#F59E0B';
     return '#EF4444';
   };
   const getExtColor = (v: number | null) => {
-    if (v === null) return 'var(--t4)';
+    if (v === null) return '#9CA3AF';
     if (v >= 56) return '#22C55E';
     if (v >= 42) return '#4B5563';
     if (v >= 35) return '#F59E0B';
     return '#EF4444';
   };
   const getTotalColor = (v: number | null) => {
-    if (v === null) return 'var(--t4)';
+    if (v === null) return '#9CA3AF';
     if (v >= 60) return '#22C55E';
     if (v >= 50) return '#4B5563';
     if (v >= 45) return '#F59E0B';
@@ -310,10 +380,10 @@ const AdminExternalMarks: React.FC = () => {
           <div className="absolute left-0 top-0 bottom-0 w-1 bg-green-500"></div>
           <div className="flex justify-between items-start mb-4">
             <div className="bg-green-50 p-2.5 rounded-lg text-green-600"><CheckCircle2 size={20} /></div>
-            <span className="bg-green-50 text-green-600 px-2.5 py-1 rounded-full text-xs font-bold leading-none">95.2% Complete</span>
+            <span className="bg-green-50 text-green-600 px-2.5 py-1 rounded-full text-xs font-bold leading-none">{((statsCount.verified / 124) * 100).toFixed(1)}% Verified</span>
           </div>
-          <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Results Uploaded</p>
-          <h2 className="text-3xl font-black text-gray-900 leading-none tracking-tight">118 <span className="text-lg text-gray-300">/ 124</span></h2>
+          <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Results Verified</p>
+          <h2 className="text-3xl font-black text-gray-900 leading-none tracking-tight">{statsCount.verified} <span className="text-lg text-gray-300">/ 124</span></h2>
           <p className="text-xs font-medium text-gray-500 mt-3 pt-3 border-t border-gray-50/50">{statsCount.pending} pending entry</p>
         </div>
 
@@ -432,84 +502,102 @@ const AdminExternalMarks: React.FC = () => {
                  </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
-                 {filteredResults.map((row, i) => {
-                   const isFlagged = row.status === 'Flagged';
-                   const isVerified = row.status === 'Verified';
-                   const canEdit = row.status === 'Uploaded' || row.status === 'Flagged' || row.status === 'Pending';
-                   const isEditing = row.isEditing && canEdit;
+                  {loadingMarks ? (
+                    Array.from({ length: 12 }).map((_, i) => (
+                      <tr key={i} className="animate-pulse h-[64px] border-l-3 border-transparent">
+                        <td className="px-4 py-3"><div className="w-4 h-4 bg-gray-100 rounded mx-auto" /></td>
+                        <td className="px-3 py-3 font-mono"><div className="w-12 h-4 bg-gray-100 rounded mx-auto" /></td>
+                        <td className="px-4 py-3"><div className="flex items-center gap-3"><div className="w-8 h-8 rounded-full bg-gray-100" /><div className="w-44 h-4 bg-gray-100 rounded" /></div></td>
+                        <td className="px-4 py-3"><div className="w-8 h-6 bg-gray-100 rounded mx-auto" /></td>
+                        <td className="px-4 py-3"><div className="w-12 h-6 bg-gray-100 rounded mx-auto" /></td>
+                        <td className="px-4 py-3"><div className="w-12 h-6 bg-gray-100 rounded mx-auto" /></td>
+                        <td className="px-4 py-3 bg-gray-50/10"><div className="w-16 h-6 bg-gray-100 rounded mx-auto" /></td>
+                        <td className="px-4 py-3"><div className="w-8 h-8 rounded-full bg-gray-100 mx-auto" /></td>
+                        <td className="px-4 py-3 text-center"><div className="w-16 h-6 bg-gray-100 rounded-full mx-auto" /></td>
+                        <td className="px-4 py-3 text-center"><div className="w-16 h-6 bg-gray-100 rounded-full mx-auto" /></td>
+                        <td className="px-4 py-3 text-center"><div className="flex justify-center gap-2"><div className="w-8 h-8 bg-gray-100 rounded" /><div className="w-8 h-8 bg-gray-100 rounded" /></div></td>
+                      </tr>
+                    ))
+                  ) : filteredResults.length === 0 ? (
+                    <tr>
+                      <td colSpan={12} className="py-16 text-center text-gray-500">No results found matching your filters.</td>
+                    </tr>
+                  ) : filteredResults.map((row, i) => {
+                    const isFlagged = row.status === 'Flagged';
+                    const isVerified = row.status === 'Verified';
+                    const canEdit = row.status === 'Uploaded' || row.status === 'Flagged' || row.status === 'Pending';
+                    const isEditing = row.isEditing && canEdit;
 
-                   return (
-                     <React.Fragment key={row.id}>
-                        <tr className="group transition-colors hover:bg-gray-50 h-[64px]" style={{ borderLeft: isFlagged ? '3px solid #F59E0B' : isVerified ? '3px solid #22C55E' : '3px solid transparent' }}>
-                           <td className="px-4 py-3 text-center"><input type="checkbox" className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer" checked={row.selected || false} onChange={() => toggleSelectRow(row.id)} /></td>
-                           <td className="px-3 py-3 text-center text-xs font-bold text-gray-400">{i + 1}</td>
-                           <td className="px-4 py-3 text-sm font-bold text-gray-500 font-mono tracking-tight">{row.rollNo}</td>
-                           <td className="px-4 py-3">
-                              <div className="flex items-center gap-3">
-                                 <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-[10px] font-bold text-gray-600">{row.initials}</div>
-                                 <span className="text-sm font-bold text-[#111827]">{row.name}</span>
-                              </div>
-                           </td>
-                           <td className="px-4 py-3 text-center">
-                              <div className="inline-block w-8 py-1 border border-gray-200 rounded text-xs font-bold text-gray-500 bg-white">{row.section}</div>
-                           </td>
-                           <td className="px-4 py-3 text-center font-mono font-bold text-[14px]">
-                              {isEditing ? (
-                                <input type="text" className="w-16 h-8 text-center border-2 border-blue-500 rounded outline-none" value={row.int === null ? '' : row.int} onChange={e => handleInputChange(row.id, 'int', e.target.value)} onBlur={() => handleEditClick(row.id)} autoFocus />
-                              ) : (
-                                <span style={{ color: getIntColor(row.int), cursor: canEdit ? 'pointer' : 'default' }} onClick={() => canEdit && handleEditClick(row.id)}>{row.int !== null ? row.int : '—'}</span>
-                              )}
-                           </td>
-                           <td className="px-4 py-3 text-center font-mono font-bold text-[14px]">
-                              {isEditing ? (
-                                <input type="text" className="w-16 h-8 text-center border-2 border-blue-500 rounded outline-none" value={row.ext === null ? '' : row.ext} onChange={e => handleInputChange(row.id, 'ext', e.target.value)} onBlur={() => handleEditClick(row.id)} />
-                              ) : (
-                                <span style={{ color: getExtColor(row.ext), cursor: canEdit ? 'pointer' : 'default' }} onClick={() => canEdit && handleEditClick(row.id)}>{row.ext !== null ? row.ext : '—'}</span>
-                              )}
-                           </td>
-                           <td className="px-4 py-3 text-center bg-gray-50/50">
-                              <span className="font-mono text-[16px] font-black" style={{ color: getTotalColor(row.total) }}>{row.total !== null ? row.total : '—'}</span>
-                           </td>
-                           <td className="px-4 py-3 text-center">
-                              <div className={`inline-flex items-center justify-center w-7 h-7 rounded-full text-[11px] font-extrabold ${getGradeStyle(row.grade)}`}>{row.grade}</div>
-                           </td>
-                           <td className="px-4 py-3 text-center">{renderBadge(row.result)}</td>
-                           <td className="px-4 py-3 text-center">{renderStatus(row.status)}</td>
-                           <td className="px-4 py-3">
-                              <div className="flex justify-center items-center gap-2">
-                                 <button onClick={() => canEdit && handleEditClick(row.id)} disabled={!canEdit} className={`p-1.5 rounded-md ${canEdit ? 'text-gray-500 hover:bg-gray-100 hover:text-blue-600' : 'text-gray-300 cursor-not-allowed'}`} title={isEditing ? 'Save Row' : 'Edit Marks'}><Edit2 size={16} className={isEditing ? 'text-blue-500' : ''} /></button>
-                                 <button onClick={() => (row.status === 'Uploaded' || row.status === 'Pending') && handleVerifyRow(row.id)} disabled={row.status === 'Verified'} className={`p-1.5 rounded-md ${row.status !== 'Verified' ? 'text-gray-500 hover:bg-gray-100 hover:text-green-600' : 'text-gray-300 cursor-not-allowed'}`} title="Verify"><CheckCircle size={16} /></button>
-                                 <button onClick={() => (row.status === 'Uploaded' || row.status === 'Verified' || row.status === 'Pending') && setFlaggingId(row.id === flaggingId ? null : row.id)} className={`p-1.5 rounded-md text-gray-500 hover:bg-gray-100 hover:text-amber-500 ${flaggingId === row.id ? 'bg-amber-100 text-amber-600' : ''}`} title="Flag Discrepancy"><Flag size={16} /></button>
-                              </div>
-                           </td>
-                        </tr>
-                        {row.flagReason && row.status === 'Flagged' && flaggingId !== row.id && (
-                          <tr className="bg-amber-50/30">
-                            <td colSpan={12} className="px-12 py-2.5 text-xs text-amber-700 font-medium">
-                              <span className="font-bold mr-2">Flag Reason:</span> {row.flagReason}
-                            </td>
-                          </tr>
-                        )}
-                        {flaggingId === row.id && (
-                          <tr className="bg-amber-50 border-y border-amber-100">
-                             <td colSpan={12} className="px-12 py-4">
-                               <div className="flex items-center gap-3 w-full max-w-2xl">
-                                  <span className="text-xs font-bold text-amber-800 uppercase tracking-widest">Reason for flag:</span>
-                                  <input type="text" className="flex-1 px-3 py-2 bg-white border border-amber-300 rounded text-sm outline-none focus:ring-2 focus:ring-amber-500" placeholder="e.g., Mismatch with physical answer sheet" autoFocus value={flagInput} onChange={e => setFlagInput(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && saveFlagReason()} />
-                                  <button onClick={saveFlagReason} className="px-3 py-2 bg-amber-500 text-white rounded text-xs font-bold hover:bg-amber-600">Save Flag</button>
-                                  <button onClick={() => setFlaggingId(null)} className="px-3 py-2 text-gray-500 text-xs font-bold hover:text-gray-700">Cancel</button>
+                    return (
+                      <React.Fragment key={row.id}>
+                         <tr className="group transition-colors hover:bg-gray-50 h-[64px]" style={{ borderLeft: isFlagged ? '3px solid #F59E0B' : isVerified ? '3px solid #22C55E' : '3px solid transparent' }}>
+                            <td className="px-4 py-3 text-center"><input type="checkbox" className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer" checked={row.selected || false} onChange={() => toggleSelectRow(row.id)} /></td>
+                            <td className="px-3 py-3 text-center text-xs font-bold text-gray-400">{i + 1}</td>
+                            <td className="px-4 py-3 text-sm font-bold text-gray-500 font-mono tracking-tight">{row.rollNo}</td>
+                            <td className="px-4 py-3">
+                               <div className="flex items-center gap-3">
+                                  <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-[10px] font-bold text-gray-600">{row.initials}</div>
+                                  <span className="text-sm font-bold text-[#111827]">{row.name}</span>
                                </div>
+                            </td>
+                            <td className="px-4 py-3 text-center">
+                               <div className="inline-block w-8 py-1 border border-gray-200 rounded text-xs font-bold text-gray-500 bg-white">{row.section}</div>
+                            </td>
+                            <td className="px-4 py-3 text-center font-mono font-bold text-[14px]">
+                               {isEditing ? (
+                                 <input type="text" className="w-16 h-8 text-center border-2 border-blue-500 rounded outline-none" value={row.int === null ? '' : row.int} onChange={e => handleInputChange(row.id, 'int', e.target.value)} onBlur={() => handleEditClick(row.id)} autoFocus />
+                               ) : (
+                                 <span style={{ color: getIntColor(row.int), cursor: canEdit ? 'pointer' : 'default' }} onClick={() => canEdit && handleEditClick(row.id)}>{row.int !== null ? row.int : '—'}</span>
+                               )}
+                            </td>
+                            <td className="px-4 py-3 text-center font-mono font-bold text-[14px]">
+                               {isEditing ? (
+                                 <input type="text" className="w-16 h-8 text-center border-2 border-blue-500 rounded outline-none" value={row.ext === null ? '' : row.ext} onChange={e => handleInputChange(row.id, 'ext', e.target.value)} onBlur={() => handleEditClick(row.id)} />
+                               ) : (
+                                 <span style={{ color: getExtColor(row.ext), cursor: canEdit ? 'pointer' : 'default' }} onClick={() => canEdit && handleEditClick(row.id)}>{row.ext !== null ? row.ext : '—'}</span>
+                               )}
+                            </td>
+                            <td className="px-4 py-3 text-center bg-gray-50/50">
+                               <span className="font-mono text-[16px] font-black" style={{ color: getTotalColor(row.total) }}>{row.total !== null ? row.total : '—'}</span>
+                            </td>
+                            <td className="px-4 py-3 text-center">
+                               <div className={`inline-flex items-center justify-center w-7 h-7 rounded-full text-[11px] font-extrabold ${getGradeStyle(row.grade)}`}>{row.grade}</div>
+                            </td>
+                            <td className="px-4 py-3 text-center">{renderBadge(row.result)}</td>
+                            <td className="px-4 py-3 text-center">{renderStatus(row.status)}</td>
+                            <td className="px-4 py-3">
+                               <div className="flex justify-center items-center gap-2">
+                                  <button onClick={() => canEdit && handleEditClick(row.id)} disabled={!canEdit} className={`p-1.5 rounded-md ${canEdit ? 'text-gray-500 hover:bg-gray-100 hover:text-blue-600' : 'text-gray-300 cursor-not-allowed'}`} title={isEditing ? 'Save Row' : 'Edit Marks'}><Edit2 size={16} className={isEditing ? 'text-blue-500' : ''} /></button>
+                                  <button onClick={() => (row.status === 'Uploaded' || row.status === 'Pending') && handleVerifyRow(row.id)} disabled={row.status === 'Verified' || isSavingAction} className={`p-1.5 rounded-md ${row.status !== 'Verified' ? 'text-gray-500 hover:bg-gray-100 hover:text-green-600' : 'text-gray-300 cursor-not-allowed'}`} title="Verify">{isSavingAction ? <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" /> : <CheckCircle size={16} />}</button>
+                                  <button onClick={() => (row.status === 'Uploaded' || row.status === 'Verified' || row.status === 'Pending') && setFlaggingId(row.id === flaggingId ? null : row.id)} className={`p-1.5 rounded-md text-gray-500 hover:bg-gray-100 hover:text-amber-500 ${flaggingId === row.id ? 'bg-amber-100 text-amber-600' : ''}`} title="Flag Discrepancy"><Flag size={16} /></button>
+                               </div>
+                            </td>
+                         </tr>
+                         {row.flagReason && row.status === 'Flagged' && flaggingId !== row.id && (
+                           <tr className="bg-amber-50/30">
+                             <td colSpan={12} className="px-12 py-2.5 text-xs text-amber-700 font-medium">
+                               <span className="font-bold mr-2">Flag Reason:</span> {row.flagReason}
                              </td>
-                          </tr>
-                        )}
-                     </React.Fragment>
-                   );
-                 })}
-                 {filteredResults.length === 0 && (
-                   <tr>
-                     <td colSpan={12} className="py-16 text-center text-gray-500">No results found matching your filters.</td>
-                   </tr>
-                 )}
+                           </tr>
+                         )}
+                         {flaggingId === row.id && (
+                           <tr className="bg-amber-50 border-y border-amber-100">
+                              <td colSpan={12} className="px-12 py-4">
+                                <div className="flex items-center gap-3 w-full max-w-2xl">
+                                   <span className="text-xs font-bold text-amber-800 uppercase tracking-widest">Reason for flag:</span>
+                                   <input type="text" className="flex-1 px-3 py-2 bg-white border border-amber-300 rounded text-sm outline-none focus:ring-2 focus:ring-amber-500" placeholder="e.g., Mismatch with physical answer sheet" autoFocus value={flagInput} onChange={e => setFlagInput(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && saveFlagReason()} />
+                                   <button onClick={saveFlagReason} disabled={isSavingAction} className="px-3 py-2 bg-amber-500 text-white rounded text-xs font-bold hover:bg-amber-600 flex items-center gap-2">
+                                      {isSavingAction && <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />}
+                                      Save Flag
+                                   </button>
+                                   <button onClick={() => setFlaggingId(null)} className="px-3 py-2 text-gray-500 text-xs font-bold hover:text-gray-700">Cancel</button>
+                                </div>
+                              </td>
+                           </tr>
+                         )}
+                      </React.Fragment>
+                    );
+                  })}
               </tbody>
            </table>
         </div>

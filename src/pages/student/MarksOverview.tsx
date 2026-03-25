@@ -10,12 +10,14 @@ import {
 } from 'lucide-react';
 import StudentLayout from '../../components/layout/StudentLayout';
 import { studentInfo } from '../../data/studentData';
+import { useAuth } from '../../context/AuthContext';
+import { useStudentMarks } from '../../hooks/useMarks';
 
 // ═══════════════════════════════════════════════════════════════
-// MOCK DATA (As per specification)
+// MOCK DATA (Fallback)
 // ═══════════════════════════════════════════════════════════════
 
-const MARKS_DATA = {
+const FALLBACK_MARKS_DATA = {
   subjects: [
     { 
       code: 'EC601', name: 'Digital Circuits', percentage: 83.2, status: 'Safe', color: '#10B981', 
@@ -122,6 +124,10 @@ const ArcIndicator = ({ percentage, color, size = 56 }: { percentage: number, co
 // ═══════════════════════════════════════════════════════════════
 
 const MarksOverview = () => {
+  const { currentUser, userProfile } = useAuth();
+  const rollNoKey = userProfile?.rollNo || userProfile?.uid || 'student-123';
+  const { data: marks, loading: loadingMarks } = useStudentMarks(rollNoKey, 6, "2025-26");
+
   const [semester, setSemester] = useState('6');
   const [viewType, setViewType] = useState<'grid' | 'table'>('grid');
   const [isExporting, setIsExporting] = useState(false);
@@ -131,6 +137,74 @@ const MarksOverview = () => {
   const [sortOrder, setSortOrder] = useState('newest');
   const [selectedSubjectsFilter, setSelectedSubjectsFilter] = useState<string[]>([]);
   const [showSubjectFilter, setShowSubjectFilter] = useState(false);
+
+  const MARKS_DATA = useMemo(() => {
+    const data = JSON.parse(JSON.stringify(FALLBACK_MARKS_DATA));
+    if (!marks) return data;
+
+    let totalPct = 0;
+    let subjectsWithMarks = 0;
+
+    data.subjects = data.subjects.map((origSub: any) => {
+        const subCode = origSub.code;
+        let updated = { ...origSub };
+        let hasLive = false;
+
+        // 1. Merge Weekly Marks (replace matching mock weeks)
+        if (marks.weekly && Array.isArray(marks.weekly)) {
+            const subWeeks = (marks.weekly as any[]).filter(m => m.subjectCode === subCode);
+            if (subWeeks.length > 0) {
+                updated.assessments = updated.assessments.map((a: any) => {
+                    if (a.type === 'Weekly Test') {
+                        const weekNum = parseInt(a.name.split(' ')[1]);
+                        const live = subWeeks.find(m => m.week === weekNum);
+                        return live ? { ...a, score: live.score, date: live.date } : a;
+                    }
+                    return a;
+                });
+                // Calculate percentage from weekly if no externals
+                const avgWeekly = subWeeks.reduce((acc, curr) => acc + (curr.score || 0), 0) / subWeeks.length;
+                updated.percentage = Math.round((avgWeekly / 10) * 100);
+                updated.status = updated.percentage >= 65 ? 'Safe' : 'Watch';
+                hasLive = true;
+            }
+        }
+
+        // 2. Merge Mid Marks
+        if (marks.mid1 && Array.isArray(marks.mid1)) {
+            const liveMid = (marks.mid1 as any[]).find(m => m.subjectCode === subCode);
+            if (liveMid) {
+                updated.assessments = updated.assessments.map((a: any) => 
+                    a.type === 'Mid-semester' && a.name.includes('1') 
+                        ? { ...a, score: liveMid.total, date: 'Updated Recently' } 
+                        : a
+                );
+                hasLive = true;
+            }
+        }
+
+        // 3. Merge External Marks (Highest priority for percentage)
+        if (marks.external && Array.isArray(marks.external)) {
+            const liveExt = (marks.external as any[]).find(m => m.subjectCode === subCode);
+            if (liveExt) {
+                const pct = liveExt.total || 0;
+                updated.percentage = pct;
+                updated.status = pct >= 65 ? 'Safe' : 'Watch';
+                totalPct += pct;
+                subjectsWithMarks++;
+                hasLive = true;
+            }
+        }
+
+        return updated;
+    });
+
+    if (subjectsWithMarks > 0) {
+        data.overallPercentage = Number((totalPct / subjectsWithMarks).toFixed(1));
+    }
+    
+    return data;
+  }, [marks]);
   
   // Stagger layout animation
   const container = {
@@ -160,15 +234,15 @@ const MarksOverview = () => {
   const filteredSubjects = useMemo(() => {
     let result = MARKS_DATA.subjects;
     if (selectedSubjectsFilter.length > 0) {
-      result = result.filter(s => selectedSubjectsFilter.includes(s.code));
+      result = result.filter((s: any) => selectedSubjectsFilter.includes(s.code));
     }
     return result;
-  }, [selectedSubjectsFilter]);
+  }, [selectedSubjectsFilter, MARKS_DATA]);
 
   const allAssessments = useMemo(() => {
     let list: any[] = [];
-    filteredSubjects.forEach(s => {
-      s.assessments.forEach(a => {
+    filteredSubjects.forEach((s: any) => {
+      s.assessments.forEach((a: any) => {
         list.push({ ...a, subjectCode: s.code, subjectName: s.name });
       });
     });
@@ -303,14 +377,14 @@ const MarksOverview = () => {
                                 <button onClick={() => setSelectedSubjectsFilter([])} className="text-[12px] text-[#1A56DB] font-medium hover:underline">Clear all</button>
                                 <button onClick={() => setShowSubjectFilter(false)} className="text-[12px] text-[#9CA3AF] hover:text-[#374151]">Close</button>
                             </div>
-                            {MARKS_DATA.subjects.map(s => (
+                            {MARKS_DATA.subjects.map((s: any) => (
                                 <label key={s.code} className="flex items-center gap-2.5 px-3 py-1.5 hover:bg-[#F9FAFB] cursor-pointer">
                                     <input 
                                       type="checkbox" 
                                       checked={selectedSubjectsFilter.includes(s.code)}
                                       onChange={(e) => {
                                           if (e.target.checked) setSelectedSubjectsFilter([...selectedSubjectsFilter, s.code]);
-                                          else setSelectedSubjectsFilter(selectedSubjectsFilter.filter(c => c !== s.code));
+                                          else setSelectedSubjectsFilter(selectedSubjectsFilter.filter((c: any) => c !== s.code));
                                       }}
                                       className="w-4 h-4 rounded border-[#E5E7EB] text-[#1A56DB] focus:ring-[#1A56DB]/20"
                                     />
@@ -376,7 +450,7 @@ const MarksOverview = () => {
                     initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                     className="grid grid-cols-1 md:grid-cols-2 gap-5"
                 >
-                    {filteredSubjects.map((sub, idx) => (
+                    {filteredSubjects.map((sub: any, idx: number) => (
                         <SubjectCard 
                             key={sub.code} 
                             sub={sub} 
@@ -522,8 +596,16 @@ const SubjectCard = ({ sub, onClick, delay }: any) => {
 
             <div className="px-6 py-4 space-y-3.5 flex-1">
                 {['Weekly Test', 'Mid-semester', 'Lab'].map((type, i) => {
-                    const rowData = sub.assessments.find((a: any) => a.type === type) || { score: 0, max: 20, avg: 15 };
+                    const typeAssessments = sub.assessments.filter((a: any) => a.type === type);
+                    const rowData = typeAssessments.length > 0 
+                        ? {
+                            score: typeAssessments.reduce((acc: number, curr: any) => acc + (curr.score || 0), 0) / typeAssessments.length,
+                            max: typeAssessments.reduce((acc: number, curr: any) => acc + (curr.max || 0), 0) / typeAssessments.length
+                          }
+                        : { score: 0, max: 20 };
+                    
                     const progressColor = type === 'Weekly Test' ? '#1A56DB' : type === 'Mid-semester' ? '#7C3AED' : '#0EA5E9';
+                    const percentage = (rowData.score / rowData.max) * 100;
                     const isMath = sub.code === 'MA601' && type === 'Lab';
                     if (isMath) return null;
 
@@ -540,8 +622,8 @@ const SubjectCard = ({ sub, onClick, delay }: any) => {
                                 />
                             </div>
                             <div className="text-right w-12 flex-shrink-0">
-                                <p className="text-[13px] font-mono font-semibold" style={{ color: progressColor }}>{rowData.score}/{rowData.max}</p>
-                                <p className="text-[10px] font-mono text-[#9CA3AF]">avg {rowData.avg}</p>
+                                <p className="text-[13px] font-mono font-semibold" style={{ color: progressColor }}>{Math.round(rowData.score)}/{Math.round(rowData.max)}</p>
+                                <p className="text-[10px] font-mono text-[#9CA3AF]">avg {typeAssessments.length > 0 ? (typeAssessments.reduce((acc: number, curr: any) => acc + (curr.avg || 0), 0) / typeAssessments.length).toFixed(1) : '15'}</p>
                             </div>
                         </div>
                     );

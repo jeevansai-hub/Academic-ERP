@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   BarChart2, TrendingUp, TrendingDown, Award,
@@ -6,12 +6,14 @@ import {
   RefreshCw, ArrowRight, AlertTriangle
 } from 'lucide-react';
 import StudentLayout from '../../components/layout/StudentLayout';
+import { useAuth } from '../../context/AuthContext';
+import { useStudentMarks } from '../../hooks/useMarks';
 
 // ═══════════════════════════════════════════════════════════════
-// MOCK DATA
+// FALLBACK & HISTORY DATA
 // ═══════════════════════════════════════════════════════════════
 
-const MARKS_DATA = {
+const FALLBACK_MARKS_DATA = {
     theory: [
         { code: 'CS601', name: 'Software Engineering', credits: 4, overview: { w: 8, m1: 20, m2: 19, ext: 54, cgpa: 8.5, grade: 'A', status: 'PASS' }, m1: { pa: 8, pb: 24, t: 32, st: 'PASS' }, m2: { pa: 7, pb: 22, t: 29, st: 'PASS' }, w: [{ a:'Present', s:8 }, { a:'Present', s:7 }, { a:'Absent', s:null }, { a:'Present', s:9 }, { a:'Present', s:8 }] },
         { code: 'CS602', name: 'Operating Systems', credits: 4, overview: { w: 9, m1: 22, m2: 21, ext: 61, cgpa: 9.2, grade: 'S', status: 'PASS' }, m1: { pa: 9, pb: 27, t: 36, st: 'PASS' }, m2: { pa: 8, pb: 25, t: 33, st: 'PASS' }, w: [{ a:'Present', s:9 }, { a:'Present', s:8 }, { a:'Present', s:7 }, { a:'Present', s:9 }, { a:'Absent', s:null }] },
@@ -98,12 +100,139 @@ const OutlineBadge = ({ children, color }: any) => {
 // ═══════════════════════════════════════════════════════════════
 
 const InternalExternalMarks = () => {
+    const { currentUser, userProfile } = useAuth();
+    // 🎯 SYNC KEY: Use Roll No for matching marks entered by Faculty
+    const rollNo = userProfile?.rollNo || userProfile?.uid || 'student-123'; 
+    const { data: marks, loading: loadingMarks } = useStudentMarks(rollNo, 6, "2025-26");
+
     const [selectedSem, setSelectedSem] = useState('6');
     const [activeTab, setActiveTab] = useState('Overview');
     const [isExporting, setIsExporting] = useState(false);
     const [expandedRows, setExpandedRows] = useState<string[]>([]);
     const tabRef = useRef<HTMLDivElement>(null);
     const [tabIndicator, setTabIndicator] = useState({ left: 0, width: 0 });
+
+    const MARKS_DATA = useMemo(() => {
+        if (marks) {
+            const m1Score = (marks.mid1 as any[])?.find(m => m.subjectCode === 'CS601')?.total;
+            console.log("DEBUG Marks State:", marks);
+            if (m1Score) alert("DEBUG: Student Side sees Mid1 score: " + m1Score);
+        }
+        const data = JSON.parse(JSON.stringify(FALLBACK_MARKS_DATA));
+        if (!marks) return data;
+
+        // 1. Merge Theory Marks (Weekly, Mid, External)
+        if (data.theory && Array.isArray(data.theory)) {
+            data.theory = data.theory.map((origSub: any) => {
+                const subCode = origSub.code;
+                let updated = { ...origSub };
+
+                // Handle Externals (Overview)
+                if (marks.external && Array.isArray(marks.external)) {
+                    const liveExt = (marks.external as any[]).find(m => m.subjectCode === subCode);
+                    if (liveExt) {
+                        updated.overview = {
+                            ...updated.overview,
+                            ext: liveExt.externalMarks,
+                            cgpa: (liveExt.total || 0) / 10,
+                            grade: liveExt.grade || '—',
+                            status: liveExt.result?.toUpperCase() || 'PASS'
+                        };
+                    }
+                }
+
+                // Handle Mid-1
+                if (marks.mid1 && Array.isArray(marks.mid1)) {
+                    const liveMid1 = (marks.mid1 as any[]).find(m => m.subjectCode === subCode);
+                    if (liveMid1) {
+                        updated.m1 = { 
+                            pa: liveMid1.partA, 
+                            pb: liveMid1.partB, 
+                            t: liveMid1.total, 
+                            st: liveMid1.status === 'pass' ? 'PASS' : 'FAIL' 
+                        };
+                        updated.overview.m1 = liveMid1.total;
+                    }
+                }
+
+                // Handle Mid-2
+                if (marks.mid2 && Array.isArray(marks.mid2)) {
+                    const liveMid2 = (marks.mid2 as any[]).find(m => m.subjectCode === subCode);
+                    if (liveMid2) {
+                        updated.m2 = { 
+                            pa: liveMid2.partA, 
+                            pb: liveMid2.partB, 
+                            t: liveMid2.total, 
+                            st: liveMid2.status === 'pass' ? 'PASS' : 'FAIL' 
+                        };
+                        updated.overview.m2 = liveMid2.total;
+                    }
+                }
+
+                // Handle Weekly
+                if (marks.weekly && Array.isArray(marks.weekly)) {
+                    const subWeeks = (marks.weekly as any[]).filter(m => m.subjectCode === subCode);
+                    if (subWeeks.length > 0) {
+                        // Replace fallback weekly with live if available
+                        const liveWeeks = [...origSub.w];
+                        subWeeks.forEach(w => {
+                            if (w.week >= 1 && w.week <= 5) {
+                                liveWeeks[w.week - 1] = { a: w.attempt === 'present' ? 'Present' : 'Absent', s: w.score };
+                            }
+                        });
+                        updated.w = liveWeeks;
+                        // Update overview average weekly
+                        const avg = subWeeks.reduce((acc, curr) => acc + (curr.score || 0), 0) / subWeeks.length;
+                        updated.overview.w = Number(avg.toFixed(1));
+                    }
+                }
+
+                return updated;
+            });
+        }
+
+        // 2. Merge Lab Marks
+        if (data.labs && Array.isArray(data.labs) && marks.labInternal && Array.isArray(marks.labInternal)) {
+            data.labs = data.labs.map((origLab: any) => {
+                const liveLab = (marks.labInternal as any[]).find(m => m.subjectCode === origLab.code);
+                if (liveLab) {
+                    return {
+                        ...origLab,
+                        iRec: liveLab.labRecord,
+                        iViva: liveLab.vivaVoce,
+                        iExec: liveLab.programExecution,
+                        iTest: liveLab.writtenTest
+                    };
+                }
+                return origLab;
+            });
+        }
+
+        // 3. Update Externals Tab (S6)
+        if (marks.external && Array.isArray(marks.external) && marks.external.length > 0) {
+            const publishedS6 = marks.external;
+            const s6Credits = 22;
+            const s6Total = publishedS6.reduce((acc: number, curr: any) => acc + (curr.total || 0), 0);
+            const s6Avg = s6Total / (publishedS6.length || 1);
+            
+            const s6Entry = {
+                sem: 6,
+                sgpa: Number((s6Avg/10).toFixed(1)),
+                credits: s6Credits,
+                subs: publishedS6.map((m: any) => ({
+                    name: m.name || m.subjectCode,
+                    int: m.internalMarks,
+                    ext: m.externalMarks || 0,
+                    t: m.total || 0,
+                    grade: m.grade || '—',
+                    res: m.result?.toUpperCase() || 'PASS'
+                }))
+            };
+            data.externals = [s6Entry, ...FALLBACK_MARKS_DATA.externals];
+        }
+
+        return data;
+    }, [marks]);
 
     const tabs = ['Overview', 'Mid Marks', 'Weekly Tests', 'Lab Internals', 'Other Credits', 'External Marks'];
 
@@ -134,6 +263,35 @@ const InternalExternalMarks = () => {
                 initial={{ opacity: 0 }} animate={{ opacity: 1 }}
                 className="max-w-[1400px] mx-auto px-7 pb-20 space-y-6"
             >
+                {/* SYNC STATUS BANNER */}
+                {!userProfile?.rollNo && (
+                    <div className="bg-[#FFFBEB] border border-[#FDE68A] p-4 rounded-xl flex items-center justify-between mb-2 shadow-sm">
+                        <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-full bg-[#F59E0B]/10 flex items-center justify-center text-[#92400E]">
+                                <AlertTriangle size={18} />
+                            </div>
+                            <div>
+                                <p className="text-[13px] font-bold text-[#92400E]">Data Sync Issue Detected</p>
+                                <p className="text-[11px] text-[#B45309]">Your account is not linked to your Roll Number. Live marks cannot be retrieved.</p>
+                            </div>
+                        </div>
+                        <button 
+                            onClick={async () => {
+                                const r = prompt("Please enter your Roll Number (e.g., VIIT-2021-CS-101):");
+                                if (r && currentUser) {
+                                    const { doc, setDoc } = await import('firebase/firestore');
+                                    const { db } = await import('../../firebase/config');
+                                    await setDoc(doc(db, 'users', currentUser.uid), { rollNo: r }, { merge: true });
+                                    window.location.reload();
+                                }
+                            }}
+                            className="px-4 py-2 bg-[#F59E0B] text-white text-[12px] font-bold rounded-lg hover:bg-[#D97706] transition-all"
+                        >
+                            Link Roll Number
+                        </button>
+                    </div>
+                )}
+
                 {/* PAGE HEADER */}
                 <div className="flex justify-between items-end pb-5 border-b border-[#F3F4F6]">
                     <div>
@@ -165,11 +323,18 @@ const InternalExternalMarks = () => {
                     </div>
                 </div>
 
-                {/* STAT CARDS (Identical to original) */}
+                {/* STAT CARDS (Dynamic from MARKS_DATA) */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-                    <StatCard label="OVERALL INTERNAL MARKS" value="199 / 280" sub="Total recorded this semester" trend="↑ +12 vs Sem 5" color="#1A56DB" icon={BarChart2} />
+                    <StatCard 
+                        label="OVERALL INTERNAL MARKS" 
+                        value={`${Math.round(MARKS_DATA.theory.reduce((acc: number, s: any) => acc + (s.overview?.w || 0) + (s.overview?.m1 || 0) + (s.overview?.m2 || 0), 0))} / 300`} 
+                        sub="Total recorded this semester" 
+                        trend="Live sync active" 
+                        color="#1A56DB" 
+                        icon={BarChart2} 
+                    />
                     <StatCard label="BEST ASSESSMENT TYPE" labelVal="Lab" score="86 / 100 total" sub="Consistently above avg" trend="Above avg" color="#10B981" icon={TrendingUp} />
-                    <StatCard label="NEEDS IMPROVEMENT" labelVal="Weekly" score="59 / 80 total" sub="3 declining weeks in CS603" trend="Below avg" color="#F59E0B" icon={AlertTriangle} />
+                    <StatCard label="NEEDS IMPROVEMENT" labelVal="Weekly" score="59 / 80 total" sub="3 weeks in CS603" trend="Review marks" color="#F59E0B" icon={AlertTriangle} />
                     <StatCard label="TOTAL CREDITS" value="130" sub="of 180 required · 72%" trend="50 remaining" color="#7C3AED" icon={Award} />
                 </div>
 
@@ -332,8 +497,8 @@ const OverviewTab = ({ theory, labs, expanded, onToggle }: any) => {
             <div className="mt-6 p-6 bg-[#F9FAFB] rounded-xl border border-[#E5E7EB] flex justify-between items-center shadow-sm">
                 <span className="text-[14px] font-bold text-[#111827] font-outfit">Total CGPA</span>
                 <div className="flex flex-col items-end">
-                    <span className="font-mono text-[28px] font-bold text-[#111827] leading-none">8.02 <span className="text-[#9CA3AF] text-[20px]">/ 10</span></span>
-                    <span className="text-[12px] text-[#6B7280] font-outfit mt-1">Calculated across all 5 subjects · Semester 6</span>
+                    <span className="font-mono text-[28px] font-bold text-[#111827] leading-none">{(theory.reduce((acc: number, curr: any) => acc + curr.overview.cgpa, 0) / theory.length).toFixed(2)} <span className="text-[#9CA3AF] text-[20px]">/ 10</span></span>
+                    <span className="text-[12px] text-[#6B7280] font-outfit mt-1">Calculated across all {theory.length} subjects · Semester 6</span>
                 </div>
             </div>
 

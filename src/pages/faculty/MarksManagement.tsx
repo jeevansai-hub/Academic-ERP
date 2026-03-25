@@ -7,6 +7,8 @@ import {
 } from 'lucide-react';
 import { assignedSubjects } from '../../data/facultyData';
 import { BarChart, Bar, XAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
+import { useClassMarksEntry, useSaveMarks } from '../../hooks/useMarks';
+import { useAuth } from '../../context/AuthContext';
 
 interface StudentEntry {
   id: string;
@@ -27,14 +29,11 @@ interface StudentEntry {
 }
 
 const initialStudents: StudentEntry[] = [
-    { id: '1', rollNo: 'VIIT21CS001', name: 'Rajesh Kumar', initials: 'RK', flagged: false, score: '', remark: '', partA: '', partB: '', record: '', viva: '', execution: '', written: '', internal: '', external: '' },
-    { id: '2', rollNo: 'VIIT21CS002', name: 'Priya Singh', initials: 'PS', flagged: false, score: '', remark: '', partA: '', partB: '', record: '', viva: '', execution: '', written: '', internal: '', external: '' },
-    { id: '3', rollNo: 'VIIT21CS003', name: 'Arun Mehra', initials: 'AM', flagged: false, score: '', remark: '', partA: '', partB: '', record: '', viva: '', execution: '', written: '', internal: '', external: '' },
-    { id: '4', rollNo: 'VIIT21CS004', name: 'Sonal Verma', initials: 'SV', flagged: false, score: '', remark: '', partA: '', partB: '', record: '', viva: '', execution: '', written: '', internal: '', external: '' },
-    { id: '5', rollNo: 'VIIT21CS005', name: 'Kiran Patel', initials: 'KP', flagged: false, score: '', remark: '', partA: '', partB: '', record: '', viva: '', execution: '', written: '', internal: '', external: '' },
-    { id: '6', rollNo: 'VIIT21CS006', name: 'Neha Gupta', initials: 'NG', flagged: false, score: '', remark: '', partA: '', partB: '', record: '', viva: '', execution: '', written: '', internal: '', external: '' },
-    { id: '7', rollNo: 'VIIT21CS007', name: 'Suresh Reddy', initials: 'SR', flagged: false, score: '', remark: '', partA: '', partB: '', record: '', viva: '', execution: '', written: '', internal: '', external: '' },
-    { id: '8', rollNo: 'VIIT21CS008', name: 'Divya Sharma', initials: 'DS', flagged: false, score: '', remark: '', partA: '', partB: '', record: '', viva: '', execution: '', written: '', internal: '', external: '' },
+    { id: '1', rollNo: 'VIIT-2021-CS-101', name: 'Rajesh Kumar', initials: 'RK', flagged: false, score: '', remark: '', partA: '', partB: '', record: '', viva: '', execution: '', written: '', internal: '', external: '' },
+    { id: '2', rollNo: 'VIIT-2021-CS-102', name: 'Priya Singh', initials: 'PS', flagged: false, score: '', remark: '', partA: '', partB: '', record: '', viva: '', execution: '', written: '', internal: '', external: '' },
+    { id: '3', rollNo: 'VIIT-2021-CS-103', name: 'Arun Mehra', initials: 'AM', flagged: false, score: '', remark: '', partA: '', partB: '', record: '', viva: '', execution: '', written: '', internal: '', external: '' },
+    { id: '4', rollNo: 'VIIT-2021-CS-104', name: 'Sonal Verma', initials: 'SV', flagged: false, score: '', remark: '', partA: '', partB: '', record: '', viva: '', execution: '', written: '', internal: '', external: '' },
+    { id: '5', rollNo: 'VIIT-2021-CS-105', name: 'Kiran Patel', initials: 'KP', flagged: false, score: '', remark: '', partA: '', partB: '', record: '', viva: '', execution: '', written: '', internal: '', external: '' },
 ];
 
 const MarksManagement: React.FC = () => {
@@ -45,28 +44,110 @@ const MarksManagement: React.FC = () => {
     type: 'Weekly Test',
     week: 'Week 1',
     date: '2026-03-22',
-    maxMarks: '10'
+    maxMarks: '10',
+    academicYear: '2025-26',
+    semester: '6'
   });
 
+  const [isConfirmed, setIsConfirmed] = useState(false);
   const [students, setStudents] = useState<StudentEntry[]>(JSON.parse(JSON.stringify(initialStudents)));
   const [searchTerm, setSearchTerm] = useState('');
-  const [saving, setSaving] = useState(false);
   const [lastSaved, setLastSaved] = useState<string | null>(null);
   const [showConfirm, setShowConfirm] = useState(false);
   const [pendingTypeChange, setPendingTypeChange] = useState<string>('');
+  const [hasManuallyEntered, setHasManuallyEntered] = useState(false);
+  
+  // -- Firestore Hooks --
+  const { currentUser } = useAuth();
+  const [subjectCode, subjectName] = (context.subject || 'Subject - Select').split(' - ');
+  const weekNum = context.week.includes('Week') ? parseInt(context.week.split(' ')[1]) : null;
+  
+  const { draftData, loading: loadingDraft } = useClassMarksEntry(
+    subjectCode, context.section, context.type, weekNum, Number(context.semester), context.academicYear
+  );
+  
+  const { saveWeekly, saveMid, saveLab, saving, error: saveError, success } = useSaveMarks();
 
+  // Restore Draft logic
   useEffect(() => {
-    if (step === 2) {
-      const timer = setTimeout(() => {
-        setSaving(true);
-        setTimeout(() => {
-          setSaving(false);
-          setLastSaved(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
-        }, 800);
-      }, 30000);
-      return () => clearTimeout(timer);
+    if (step === 2 && draftData && draftData.length > 0 && !hasManuallyEntered) {
+      setStudents(prev => prev.map(s => {
+        const found = draftData.find(d => d.studentId === s.rollNo);
+        if (found) {
+          return {
+            ...s,
+            score: found.score?.toString() || found.total?.toString() || s.score,
+            remark: found.remark || s.remark,
+            partA: found.partA?.toString() || s.partA,
+            partB: found.partB?.toString() || s.partB,
+            record: found.labRecord?.toString() || s.record,
+            viva: found.vivaVoce?.toString() || s.viva,
+            execution: found.programExecution?.toString() || s.execution,
+            written: found.writtenTest?.toString() || s.written,
+            internal: found.internalMarks?.toString() || s.internal,
+            external: found.externalMarks?.toString() || s.external,
+          };
+        }
+        return s;
+      }));
+      setLastSaved(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
     }
-  }, [students, step]);
+  }, [draftData, step]);
+
+  const handleSave = async (isFinal = false) => {
+    const payloadEntries = students.map(s => {
+        const hasScore = s.score !== '' && s.score !== undefined;
+        const hasMid = (s.partA !== '' || s.partB !== '');
+        const hasLab = (s.record !== '' || s.viva !== '');
+        
+        if (context.type === 'Weekly Test' && hasScore) {
+            return { studentId: s.rollNo, score: Number(s.score), remark: s.remark, attempt: 'present' };
+        } else if (context.type.includes('Mid') && hasMid) {
+            const t = Number(s.partA) + Number(s.partB);
+            return { studentId: s.rollNo, partA: Number(s.partA), partB: Number(s.partB), total: t, status: (t >= 16) ? 'pass' : 'fail' };
+        } else if (context.type === 'Lab Internal' && hasLab) {
+            const t = Number(s.record) + Number(s.viva) + Number(s.execution) + Number(s.written);
+            return { studentId: s.rollNo, labRecord: Number(s.record), vivaVoce: Number(s.viva), programExecution: Number(s.execution), writtenTest: Number(s.written), total: t, assessmentType: 'internal' };
+        }
+        return null;
+    }).filter(Boolean);
+
+    if (payloadEntries.length === 0) {
+        return;
+    }
+
+    const basePayload = {
+        subjectCode,
+        section: context.section,
+        semester: Number(context.semester),
+        academicYear: context.academicYear,
+        enteredBy: currentUser?.uid || "faculty_uid",
+        entries: payloadEntries as any[]
+    };
+
+    try {
+        if (context.type === 'Weekly Test') {
+            await saveWeekly({ ...basePayload, week: weekNum, date: context.date, maxMarks: Number(context.maxMarks) });
+        } else if (context.type.includes('Mid')) {
+            await saveMid({ ...basePayload, examType: context.type === 'Mid-1 Exam' ? 'mid1' : 'mid2', maxMarks: Number(context.maxMarks), partAMax: 10, partBMax: 30 });
+        } else if (context.type === 'Lab Internal') {
+            await saveLab({ ...basePayload, assessmentType: 'internal', maxMarks: Number(context.maxMarks) });
+        }
+        
+        alert("SUCCESS: Marks saved and reflected in student dashboards!");
+        setLastSaved(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
+        
+        if (isFinal) {
+           setStep(1);
+           setStudents(JSON.parse(JSON.stringify(initialStudents)));
+           setIsConfirmed(false);
+           setShowConfirm(false);
+        }
+    } catch (err: any) {
+        alert("FAILED: " + (err.message || "Unknown error occurred while saving marks. Please check your internet."));
+        console.error("handleSave Error:", err);
+    }
+  };
 
   const anyMarksEntered = students.some(s => 
     s.score !== '' || s.partA !== '' || s.partB !== '' || 
@@ -171,17 +252,27 @@ const MarksManagement: React.FC = () => {
   };
 
   const handleInputChange = (id: string, field: keyof StudentEntry, value: string, max: number) => {
-    if (value === '') {
-      setStudents(prev => prev.map(s => s.id === id ? { ...s, [field]: '' } : s));
-      return;
-    }
-    if (!/^\d*\.?\d*$/.test(value)) return;
+    // Basic validation
+    if (value !== '' && !/^\d*\.?\d*$/.test(value)) return;
     if (value.includes('.') && value.split('.')[1].length > 1) return;
     
-    // As per prompt: reject silently negative
-    if (Number(value) < 0) value = '0';
+    // Safety clamp (per user request: no negative)
+    let processedValue = value;
+    if (value !== '' && Number(value) < 0) processedValue = '0';
     
-    setStudents(prev => prev.map(s => s.id === id ? { ...s, [field]: value } : s));
+    setStudents(prev => {
+        const next = [...prev];
+        const idx = next.findIndex(s => s.id === id);
+        if (idx !== -1) {
+            next[idx] = { ...next[idx], [field]: processedValue };
+        }
+        return next;
+    });
+
+    setHasManuallyEntered(true);
+    
+    // Update last saved text to reflect typing
+    setLastSaved("Drafting...");
   };
 
   // Validation helper
@@ -276,7 +367,6 @@ const MarksManagement: React.FC = () => {
   };
 
   const filteredStudents = students.filter(s => s.name.toLowerCase().includes(searchTerm.toLowerCase()) || s.rollNo.toLowerCase().includes(searchTerm.toLowerCase()));
-  const subjectCode = context.subject ? context.subject.split(' - ')[0] : 'Subject';
 
   return (
     <div className="space-y-8 pb-32">
@@ -354,7 +444,6 @@ const MarksManagement: React.FC = () => {
                 {getSubFields()}
               </div>
             </div>
-
             <button onClick={() => setStep(2)} disabled={!context.subject} className="w-full mt-12 py-4 bg-[#1a56db] text-white rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-[#1648c8] shadow-lg shadow-blue-500/20 active:translate-y-0.5 transition-all disabled:opacity-50 disabled:translate-y-0 disabled:shadow-none">
               Continue to Marks Entry <ChevronRight size={20} />
             </button>
@@ -367,8 +456,24 @@ const MarksManagement: React.FC = () => {
               <div className="flex items-center gap-5 w-full md:w-auto">
                 <button onClick={() => setStep(1)} className="p-2 bg-white/10 rounded-lg hover:bg-white/20 transition-colors hidden sm:block"><ChevronLeft size={20} /></button>
                 <div className="flex-1">
-                  <h3 className="text-xl font-bold tracking-tight">{subjectCode} — {context.type}</h3>
-                  <p className="text-sm text-white/80 mt-1 font-medium">{context.section} <span className="mx-1">•</span> {context.week} <span className="mx-1">•</span> Max: {context.maxMarks} Marks</p>
+                  <div className="flex items-baseline gap-2">
+                    <h3 className="text-xl font-bold tracking-tight">{subjectCode}</h3>
+                    <span className="text-white/60 text-sm font-medium">—</span>
+                    <h4 className="text-white/90 font-semibold">{subjectName || 'No Subject'}</h4>
+                  </div>
+                  <p className="text-xs text-white/70 mt-1.5 flex items-center gap-2 font-medium">
+                    <span className="px-1.5 py-0.5 bg-white/10 rounded uppercase tracking-wider text-[10px]">{context.type}</span>
+                    <span className="opacity-40">•</span>
+                    <span>{context.section}</span>
+                    <span className="opacity-40">•</span>
+                    <span>{context.week}</span>
+                    <span className="opacity-40">•</span>
+                    <span>Max: {context.maxMarks}</span>
+                    <span className="opacity-40">•</span>
+                    <span className="text-white/60">Sem {context.semester}</span>
+                    <span className="opacity-40">•</span>
+                    <span className="text-white/60">{context.academicYear}</span>
+                  </p>
                 </div>
               </div>
               <div className="flex items-center justify-between md:justify-end gap-8 w-full md:w-auto mt-4 md:mt-0 px-4 md:px-0 border-t border-white/10 md:border-0 pt-4 md:pt-0">
@@ -396,6 +501,12 @@ const MarksManagement: React.FC = () => {
             </div>
 
             <div className="bg-white rounded-2xl border border-[#e5e7eb] shadow-sm overflow-x-auto">
+              {saveError && (
+                <div className="mx-6 mt-4 p-4 bg-red-50 border border-red-200 rounded-xl flex items-center gap-3 text-red-600 animate-in fade-in slide-in-from-top-2">
+                  <AlertCircle size={18} />
+                  <p className="text-sm font-bold">Failed to save marks. Please check your connection and try again.</p>
+                </div>
+              )}
               <table className="w-full border-collapse min-w-[800px]">
                 <thead>
                   <tr className="bg-[#f9fafb] border-b border-[#e5e7eb] h-[48px]">
@@ -522,10 +633,15 @@ const MarksManagement: React.FC = () => {
                   </div>
                </div>
                <div className="flex gap-4 relative group/submit">
-                  <button className="hidden sm:flex px-6 py-3 border border-[#e5e7eb] rounded-xl font-bold text-sm text-[#374151] hover:bg-gray-50 transition-colors items-center gap-2">
-                    <Save size={18} /> Save Draft
+                  <button 
+                    onClick={() => handleSave(false)}
+                    disabled={saving}
+                    className="hidden sm:flex px-6 py-3 border border-[#e5e7eb] rounded-xl font-bold text-sm text-[#374151] hover:bg-gray-50 transition-colors items-center gap-2 group/save"
+                  >
+                    {saving ? <div className="w-4 h-4 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin" /> : <Save size={18} />}
+                    {saving ? 'Saving...' : 'Save Draft'}
                   </button>
-                  <button onClick={() => setStep(3)} disabled={stats.pending > 0} className="px-8 py-3 bg-[#1a56db] text-white rounded-xl font-bold text-sm hover:bg-[#1648c8] shadow-lg shadow-blue-500/20 transition-all flex items-center gap-2 disabled:opacity-50 disabled:shadow-none disabled:cursor-not-allowed">
+                  <button onClick={() => setStep(3)} disabled={!anyMarksEntered || saving} className="px-8 py-3 bg-[#1a56db] text-white rounded-xl font-bold text-sm hover:bg-[#1648c8] shadow-lg shadow-blue-500/20 transition-all flex items-center gap-2 disabled:opacity-50 disabled:shadow-none disabled:cursor-not-allowed">
                     Review & Submit <ChevronRight size={18} />
                   </button>
                   {stats.pending > 0 && <span className="absolute -top-12 right-0 bg-gray-900 border border-gray-700 text-white text-xs font-semibold px-4 py-2 rounded-lg opacity-0 group-hover/submit:opacity-100 transition-opacity pointer-events-none whitespace-nowrap shadow-xl">{stats.pending} students still pending</span>}
@@ -559,13 +675,25 @@ const MarksManagement: React.FC = () => {
                      <p className="text-xs sm:text-sm text-[#1a56db] font-semibold leading-relaxed">By submitting, these marks will be reflected in student dashboards instantly. Please ensure accuracy.</p>
                   </div>
                   <label className="flex items-center gap-4 cursor-pointer p-4 group">
-                     <input type="checkbox" className="w-5 h-5 rounded border-gray-300 text-[#1a56db] focus:ring-[#1a56db] cursor-pointer" />
+                     <input 
+                        type="checkbox" 
+                        checked={isConfirmed}
+                        onChange={(e) => setIsConfirmed(e.target.checked)}
+                        className="w-5 h-5 rounded border-gray-300 text-[#1a56db] focus:ring-[#1a56db] cursor-pointer" 
+                     />
                      <span className="text-sm font-bold text-[#374151]">I confirm that these marks have been verified against the original answer sheets.</span>
                   </label>
                </div>
                <div className="flex gap-4 mt-8 pt-8 border-t border-gray-100">
-                  <button onClick={() => setStep(2)} className="flex-1 py-4 border border-[#e5e7eb] bg-white rounded-2xl font-bold text-gray-500 hover:bg-gray-50 transition-colors">Go Back & Edit</button>
-                  <button className="flex-[2] py-4 bg-[#1a56db] text-white rounded-2xl font-extrabold text-lg flex items-center justify-center gap-2 hover:bg-[#1648c8] shadow-xl shadow-blue-500/20 active:translate-y-0.5 transition-all">Submit Final Marks</button>
+                  <button onClick={() => setStep(2)} disabled={saving} className="flex-1 py-4 border border-[#e5e7eb] bg-white rounded-2xl font-bold text-gray-500 hover:bg-gray-50 transition-colors disabled:opacity-50">Go Back & Edit</button>
+                  <button 
+                    onClick={() => handleSave(true)}
+                    disabled={saving || !isConfirmed}
+                    className="flex-[2] py-4 bg-[#1a56db] text-white rounded-2xl font-extrabold text-lg flex items-center justify-center gap-2 hover:bg-[#1648c8] shadow-xl shadow-blue-500/20 active:translate-y-0.5 transition-all disabled:opacity-40 disabled:grayscale"
+                  >
+                    {saving ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : null}
+                    {saving ? 'Submitting Marks...' : 'Submit Final Marks'}
+                  </button>
                </div>
              </div>
           </motion.div>

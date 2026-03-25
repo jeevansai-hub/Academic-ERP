@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { User, onAuthStateChanged, signOut } from 'firebase/auth';
+import { User, onAuthStateChanged, signOut, signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
 import { auth, db } from '../firebase/config';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
 
 interface UserProfile {
   uid: string;
@@ -22,6 +22,7 @@ interface AuthContextType {
   userProfile: UserProfile | null;
   loading: boolean;
   login: (email: string, pass: string, role: string) => Promise<void>;
+  signInWithGoogle: (role: string) => Promise<void>;
   logout: () => Promise<void>;
 }
 
@@ -30,6 +31,7 @@ const AuthContext = createContext<AuthContextType>({
   userProfile: null,
   loading: true,
   login: async () => {},
+  signInWithGoogle: async () => {},
   logout: async () => {},
 });
 
@@ -40,71 +42,106 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Persistence for development/demo
   useEffect(() => {
-    const savedUser = sessionStorage.getItem('ecap_mock_user');
-    if (savedUser) {
-      setUserProfile(JSON.parse(savedUser));
-    }
-  }, []);
-
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user: User | null) => {
+    const unsubscribe = onAuthStateChanged(auth, (user: User | null) => {
       setCurrentUser(user);
+      
       if (user) {
-        try {
-          const docRef = doc(db, 'users', user.uid);
-          const docSnap = await getDoc(docRef);
+        // 1. Immediately create a local profile so the app loads FAST
+        const pendingRole = localStorage.getItem('ecap_dev_role') || 'student';
+        
+        // Extract potential roll number from email prefix
+        const emailPrefix = user.email?.split('@')[0] || '';
+        const potentialRollNo = (emailPrefix.includes('-') || /^\d+$/.test(emailPrefix)) ? emailPrefix : null;
+
+        const initialProfile: UserProfile = {
+          uid: user.uid,
+          name: user.displayName || 'User',
+          email: user.email || '',
+          role: pendingRole as any,
+          rollNo: potentialRollNo,
+          isActive: true,
+          avatar: user.photoURL || ''
+        };
+        setUserProfile(initialProfile);
+
+        // 2. Fetch the real profile from Firestore in the background (Don't await it!)
+        const docRef = doc(db, 'users', user.uid);
+        getDoc(docRef).then((docSnap) => {
           if (docSnap.exists()) {
             setUserProfile(docSnap.data() as UserProfile);
           } else {
-            setUserProfile(null);
+            setDoc(docRef, initialProfile).catch(() => {});
           }
-        } catch (err) {
-          console.error('Error fetching user profile:', err);
-          setUserProfile(null);
-        }
+        }).catch((err) => {
+          console.warn("Background profile sync skipped (offline):", err);
+        });
       } else {
         setUserProfile(null);
       }
+      
+      // 3. Mark as loaded IMMEDIATELY
       setLoading(false);
     });
 
     return unsubscribe;
   }, []);
 
-  const login = async (emailOrRoll: string, pass: string, role: any) => {
-    setLoading(true);
-    // In a real app, you'd call signInWithEmailAndPassword(auth, email, pass)
-    // For now, we simulate success and set the profile
-    
-    const mockProfile: UserProfile = {
-      uid: 'mock-uid-' + Date.now(),
-      name: role === 'student' ? 'Rajesh Kumar' : role === 'faculty' ? 'Dr. Ramesh Kumar' : 'System Admin',
-      email: emailOrRoll.includes('@') ? emailOrRoll : `${emailOrRoll}@viit.ac.in`,
-      role: role,
-      department: 'Computer Science & Engineering',
-      avatar: '',
-      isActive: true,
-      rollNo: role === 'student' ? (emailOrRoll.includes('@') ? 'VIIT21CS001' : emailOrRoll) : null,
-    };
+  const login = async (emailOrRoll: string, pass: string, role: string) => {
+    try {
+      localStorage.setItem('ecap_dev_role', role); 
+      const input = emailOrRoll.trim().replace(/\s+/g, '');
+      const email = input.includes('@') ? input : `${input}@viit.ac.in`;
+      
+      let userCredential;
+      try {
+        userCredential = await signInWithEmailAndPassword(auth, email, pass);
+      } catch (signInError: any) {
+        if (signInError.code === 'auth/user-not-found' || signInError.code === 'auth/invalid-credential' || signInError.code === 'auth/invalid-login-credentials') {
+          console.log("User not found, auto-creating account...");
+          userCredential = await createUserWithEmailAndPassword(auth, email, pass);
+        } else {
+          throw signInError;
+        }
+      }
 
-    setUserProfile(mockProfile);
-    sessionStorage.setItem('ecap_mock_user', JSON.stringify(mockProfile));
-    setLoading(false);
+      // Just set the user; the onAuthStateChanged handle above will take it from here
+      setCurrentUser(userCredential.user);
+
+    } catch (error) {
+      console.error('Login error:', error);
+      throw error;
+    }
+  };
+
+  const signInWithGoogle = async (role: string) => {
+    const { GoogleAuthProvider, signInWithPopup } = await import('firebase/auth');
+    const provider = new GoogleAuthProvider();
+    localStorage.setItem('ecap_dev_role', role);
+    try {
+      await signInWithPopup(auth, provider);
+    } catch (error) {
+      console.error('Google Sign-in error:', error);
+      throw error;
+    }
   };
 
   const logout = async () => {
     try {
       await signOut(auth);
-    } catch (e) {}
-    setUserProfile(null);
-    sessionStorage.removeItem('ecap_mock_user');
+      localStorage.removeItem('ecap_userRole');
+      localStorage.removeItem('ecap_dev_role');
+      localStorage.removeItem('ecap_adminUser');
+      setUserProfile(null);
+      setCurrentUser(null);
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
   };
 
   return (
-    <AuthContext.Provider value={{ currentUser, userProfile, loading, login, logout }}>
-      {(!loading || userProfile) && children}
+    <AuthContext.Provider value={{ currentUser, userProfile, loading, login, signInWithGoogle, logout }}>
+      {children}
     </AuthContext.Provider>
   );
 };

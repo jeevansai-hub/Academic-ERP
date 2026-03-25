@@ -3,12 +3,15 @@
   "version": "1.0.0",
   "description": "ECAP — VIIT Student Performance Portal",
   "scripts": {
-    "dev:frontend": "cd src && npm run dev",
-    "dev:functions": "cd functions && npm run serve",
-    "build": "cd src && npm run build && cd ../functions && npm run build"
+    "dev:frontend": "npm run dev -w src",
+    "dev:functions": "npm run serve -w functions",
+    "build": "npm run build -w src && npm run build -w functions"
   },
   "workspaces": [
     "src",
     "functions"
-  ]
+  ],
+  "dependencies": {
+    "firebase": "^10.4.0"
+  }
 }
