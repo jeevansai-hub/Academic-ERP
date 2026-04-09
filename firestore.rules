@@ -31,5 +31,59 @@ service cloud.firestore {
     // Subjects and Announcements
     match /subjects/{id} { allow read: if isSignedIn(); allow write: if isAdmin(); }
     match /announcements/{id} { allow read: if isSignedIn(); allow write: if isAdmin(); }
+
+    // --- PARENT PORTAL RULES ---
+    
+    // Parent can read their own profile and update limited fields
+    match /users/{userId} {
+      allow read: if request.auth != null && request.auth.uid == userId;
+      allow update: if request.auth != null 
+        && request.auth.uid == userId 
+        && request.resource.data.role == resource.data.role
+        && !('linkedStudentUID' in request.resource.data.diff(resource.data).affectedKeys())
+        && !('email' in request.resource.data.diff(resource.data).affectedKeys());
+    }
+
+    // Parent can read linked student's marks (spanning across marks collections)
+    match /marks/{markId} {
+      allow read: if request.auth != null 
+        && exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.linkedStudentUID == resource.data.studentUID;
+    }
+
+    // Parent can read linked student's attendance
+    match /attendance/{attendanceId} {
+      allow read: if request.auth != null 
+        && exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.linkedStudentUID == resource.data.studentUID;
+    }
+
+    // Parent can read linked student's fees
+    match /fees/{feeId} {
+      allow read: if request.auth != null 
+        && exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.linkedStudentUID == resource.data.studentUID;
+      allow update: if request.auth != null 
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.linkedStudentUID == resource.data.studentUID
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'paidDate', 'receiptNumber']);
+    }
+
+    // Parent can create and read their own meeting requests
+    match /meetingRequests/{requestId} {
+      allow create: if request.auth != null 
+        && request.resource.data.parentUID == request.auth.uid
+        && request.resource.data.status == 'Pending';
+      allow read: if request.auth != null 
+        && resource.data.parentUID == request.auth.uid;
+    }
+
+    // Parent can read and update their own notifications
+    match /notifications/{notificationId} {
+      allow read: if request.auth != null 
+        && resource.data.recipientUID == request.auth.uid;
+      allow update: if request.auth != null 
+        && resource.data.recipientUID == request.auth.uid
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['isRead']);
+    }
   }
 }

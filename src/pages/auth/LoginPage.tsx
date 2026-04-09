@@ -169,7 +169,7 @@ const LoginLeftPanel = React.memo(() => {
 });
 
 const LoginRightPanel = () => {
-  const [role, setRole] = useState<'student' | 'faculty' | 'admin'>('student');
+  const [role, setRole] = useState<'student' | 'faculty' | 'admin' | 'parent'>('student');
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -210,10 +210,18 @@ const LoginRightPanel = () => {
     }
 
     setLoading(true);
-    
     // Simulate auth flow
     setTimeout(async () => {
       try {
+        if (role === 'parent') {
+          setLoading(false);
+          setSuccess(true);
+          setTimeout(() => {
+            window.location.href = '/parent-portal.html';
+          }, 1800);
+          return;
+        }
+
         if (role === 'admin') {
           // Admin Login Logic (Rule 1)
           localStorage.setItem('ecap_userRole', 'admin');
@@ -279,7 +287,7 @@ const LoginRightPanel = () => {
             className="flex p-1 rounded-sm relative"
             style={{ background: '#F1F5F9', border: '1px solid #E2E8F0' }}
           >
-            {['student', 'faculty', 'admin'].map((r) => {
+            {['student', 'parent', 'faculty', 'admin'].map((r) => {
               const isActive = role === r;
               return (
                 <button
@@ -319,7 +327,7 @@ const LoginRightPanel = () => {
           {/* Ident field */}
           <div className="flex flex-col gap-2 mb-4">
             <label className="text-label text-charcoal">
-              {role === 'student' ? 'Roll Number / Email' : 'Email Address'}
+              {role === 'student' ? 'Roll Number / Email' : (role === 'parent' ? 'Parent Email' : 'Email Address')}
             </label>
             <div className="relative group">
               <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-cool group-focus-within:text-blue-accent transition-colors">
@@ -329,7 +337,7 @@ const LoginRightPanel = () => {
                 type={role === 'student' ? 'text' : 'email'}
                 value={identifier}
                 onChange={(e) => { setIdentifier(e.target.value); setError(''); }}
-                placeholder={role === 'student' ? 'VIIT2021CS001' : `your.name@vignaniit.edu.in`}
+                placeholder={role === 'student' ? 'VIIT2021CS001' : (role === 'parent' ? 'parent@example.com' : `your.name@vignaniit.edu.in`)}
                 className={`w-full h-[50px] pl-[42px] pr-4 bg-bg-offwhite border-[1.5px] rounded-sm font-body text-[14.5px] text-[#1A2840] placeholder-slate-cool transition-all focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-accent/10 focus:border-blue-accent ${error ? 'border-error ring-4 ring-error/10 bg-white' : 'border-border-bluegrey'}`}
               />
             </div>

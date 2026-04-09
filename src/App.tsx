@@ -1,4 +1,5 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { Suspense, lazy } from 'react';
 import { AuthProvider } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { LoginPage } from './pages/auth/LoginPage';
@@ -27,7 +28,14 @@ import AssessmentControl from './pages/faculty/AssessmentControl';
 import ReportsAttendance from './pages/faculty/ReportsAttendance';
 import SettingsPage from './pages/faculty/Settings';
 import FacultyLayout from './components/faculty/FacultyLayout';
+
+// Admin & Parent
 import AdminRoutes from './admin/AdminRoutes';
+import ParentRoutes from './portals/parent/routes/parentRoutes';
+import ParentSkeletonLoader from './portals/parent/components/ParentSkeletonLoader';
+
+// Parent Page Lazy Imports
+const ParentDashboard = lazy(() => import('./portals/parent/pages/ParentDashboard'));
 
 // Basic scaffolding for pages
 const RegisterPage = () => <div className="p-8">Register Page Placeholder</div>;
@@ -43,188 +51,37 @@ function App() {
             <Route path="/register" element={<RegisterPage />} />
             
             {/* Student Routes */}
-            <Route 
-              path="/student/dashboard" 
-              element={
-                <ProtectedRoute allowedRole="student">
-                  <StudentDashboard />
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/student/marks" 
-              element={
-                <ProtectedRoute allowedRole="student">
-                  <MarksOverview />
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/student/cgpa" 
-              element={
-                <ProtectedRoute allowedRole="student">
-                  <CGPAProgress />
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/student/backlogs" 
-              element={
-                <ProtectedRoute allowedRole="student">
-                  <BacklogsAlerts />
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/student/internal-marks" 
-              element={
-                <ProtectedRoute allowedRole="student">
-                  <InternalExternalMarks />
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/student/exam-hub" 
-              element={
-                <ProtectedRoute allowedRole="student">
-                  <ExamHub />
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/student/academic-interaction" 
-              element={
-                <ProtectedRoute allowedRole="student">
-                  <AcademicInteraction />
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/student/exam-feedback" 
-              element={
-                <ProtectedRoute allowedRole="student">
-                  <ExamFeedback />
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/student/achievements" 
-              element={
-                <ProtectedRoute allowedRole="student">
-                  <Achievements />
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/student/curriculum" 
-              element={
-                <ProtectedRoute allowedRole="student">
-                  <Curriculum />
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/student/reports" 
-              element={
-                <ProtectedRoute allowedRole="student">
-                  <ReportsDownloads />
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/student/profile" 
-              element={
-                <ProtectedRoute allowedRole="student">
-                  <ProfileSettings />
-                </ProtectedRoute>
-              } 
-            />
+            <Route path="/student/dashboard" element={<ProtectedRoute allowedRole="student"><StudentDashboard /></ProtectedRoute>} />
+            <Route path="/student/marks" element={<ProtectedRoute allowedRole="student"><MarksOverview /></ProtectedRoute>} />
+            <Route path="/student/cgpa" element={<ProtectedRoute allowedRole="student"><CGPAProgress /></ProtectedRoute>} />
+            <Route path="/student/backlogs" element={<ProtectedRoute allowedRole="student"><BacklogsAlerts /></ProtectedRoute>} />
+            <Route path="/student/internal-marks" element={<ProtectedRoute allowedRole="student"><InternalExternalMarks /></ProtectedRoute>} />
+            <Route path="/student/exam-hub" element={<ProtectedRoute allowedRole="student"><ExamHub /></ProtectedRoute>} />
+            <Route path="/student/academic-interaction" element={<ProtectedRoute allowedRole="student"><AcademicInteraction /></ProtectedRoute>} />
+            <Route path="/student/exam-feedback" element={<ProtectedRoute allowedRole="student"><ExamFeedback /></ProtectedRoute>} />
+            <Route path="/student/achievements" element={<ProtectedRoute allowedRole="student"><Achievements /></ProtectedRoute>} />
+            <Route path="/student/curriculum" element={<ProtectedRoute allowedRole="student"><Curriculum /></ProtectedRoute>} />
+            <Route path="/student/reports" element={<ProtectedRoute allowedRole="student"><ReportsDownloads /></ProtectedRoute>} />
+            <Route path="/student/profile" element={<ProtectedRoute allowedRole="student"><ProfileSettings /></ProtectedRoute>} />
 
             {/* Faculty Routes */}
-            <Route 
-              path="/faculty/dashboard" 
-              element={
-                <ProtectedRoute allowedRole="faculty">
-                  <FacultyLayout>
-                    <FacultyDashboard />
-                  </FacultyLayout>
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/faculty/subjects" 
-              element={
-                <ProtectedRoute allowedRole="faculty">
-                  <FacultyLayout>
-                    <FacultySubjects />
-                  </FacultyLayout>
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/faculty/marks" 
-              element={
-                <ProtectedRoute allowedRole="faculty">
-                  <FacultyLayout>
-                    <MarksManagement />
-                  </FacultyLayout>
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/faculty/performance" 
-              element={
-                <ProtectedRoute allowedRole="faculty">
-                  <FacultyLayout>
-                    <StudentPerformance />
-                  </FacultyLayout>
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/faculty/analytics" 
-              element={
-                <ProtectedRoute allowedRole="faculty">
-                  <FacultyLayout>
-                    <ClassAnalytics />
-                  </FacultyLayout>
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/faculty/assessments" 
-              element={
-                <ProtectedRoute allowedRole="faculty">
-                  <FacultyLayout>
-                    <AssessmentControl />
-                  </FacultyLayout>
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/faculty/reports" 
-              element={
-                <ProtectedRoute allowedRole="faculty">
-                  <FacultyLayout>
-                    <ReportsAttendance />
-                  </FacultyLayout>
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/faculty/settings" 
-              element={
-                <ProtectedRoute allowedRole="faculty">
-                  <FacultyLayout>
-                    <SettingsPage />
-                  </FacultyLayout>
-                </ProtectedRoute>
-              } 
-            />
+            <Route path="/faculty/dashboard" element={<ProtectedRoute allowedRole="faculty"><FacultyLayout><FacultyDashboard /></FacultyLayout></ProtectedRoute>} />
+            <Route path="/faculty/subjects" element={<ProtectedRoute allowedRole="faculty"><FacultyLayout><FacultySubjects /></FacultyLayout></ProtectedRoute>} />
+            <Route path="/faculty/marks" element={<ProtectedRoute allowedRole="faculty"><FacultyLayout><MarksManagement /></FacultyLayout></ProtectedRoute>} />
+            <Route path="/faculty/performance" element={<ProtectedRoute allowedRole="faculty"><FacultyLayout><StudentPerformance /></FacultyLayout></ProtectedRoute>} />
+            <Route path="/faculty/analytics" element={<ProtectedRoute allowedRole="faculty"><FacultyLayout><ClassAnalytics /></FacultyLayout></ProtectedRoute>} />
+            <Route path="/faculty/assessments" element={<ProtectedRoute allowedRole="faculty"><FacultyLayout><AssessmentControl /></FacultyLayout></ProtectedRoute>} />
+            <Route path="/faculty/reports" element={<ProtectedRoute allowedRole="faculty"><FacultyLayout><ReportsAttendance /></FacultyLayout></ProtectedRoute>} />
+            <Route path="/faculty/settings" element={<ProtectedRoute allowedRole="faculty"><FacultyLayout><SettingsPage /></FacultyLayout></ProtectedRoute>} />
 
             {/* Admin Routes */}
             <Route path="/admin/*" element={<AdminRoutes />} />
 
+            {/* NEW: Explicit Parent Portal Routes */}
+            <Route path="/parent/dashboard" element={<ProtectedRoute allowedRole="parent"><ParentRoutes><Suspense fallback={<ParentSkeletonLoader type="page" />}><ParentDashboard /></Suspense></ParentRoutes></ProtectedRoute>} />
+
+            {/* Redirects */}
+            <Route path="/parent/*" element={<Navigate to="/parent/dashboard" replace />} />
             <Route path="/" element={<Navigate to="/login" replace />} />
           </Routes>
         </ThemeProvider>

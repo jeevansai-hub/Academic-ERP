@@ -1,0 +1,836 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Parents Portal | Academic ERP</title>
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700&family=DM+Sans:wght@400;500;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet" />
+  <style>
+    /* VARIABLES & THEME */
+    :root {
+      --bg-base: #0B1120;
+      --bg-card: rgba(15, 23, 42, 0.6);
+      --bg-card-hover: rgba(30, 41, 59, 0.8);
+      --text-main: #F8FAFC;
+      --text-muted: #94A3B8;
+      --accent-primary: #00D4FF;
+      --accent-glow: rgba(0, 212, 255, 0.2);
+      --status-ok: #10B981;
+      --status-warn: #FFB347;
+      --status-err: #EF4444;
+      --font-display: 'Sora', sans-serif;
+      --font-body: 'DM Sans', sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+      --transition: 0.3s ease;
+    }
+    
+    body.light-theme {
+      --bg-base: #F8FAFC;
+      --bg-card: rgba(255, 255, 255, 0.8);
+      --bg-card-hover: rgba(241, 245, 249, 0.9);
+      --text-main: #0F172A;
+      --text-muted: #475569;
+      --accent-primary: #0284C7;
+      --accent-glow: rgba(2, 132, 199, 0.1);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: var(--font-body);
+      background-color: var(--bg-base);
+      color: var(--text-main);
+      overflow-x: hidden;
+      min-height: 100vh;
+      display: flex;
+      scroll-behavior: smooth;
+    }
+
+    /* BACKGROUND MESH */
+    .bg-mesh {
+      position: fixed; inset: 0; z-index: -1;
+      background: radial-gradient(circle at 15% 50%, var(--accent-glow), transparent 25%),
+                  radial-gradient(circle at 85% 30%, rgba(16, 185, 129, 0.1), transparent 25%);
+      animation: pulse 10s infinite alternate;
+    }
+
+    @keyframes pulse {
+      0% { opacity: 0.8; }
+      100% { opacity: 1.2; }
+    }
+
+    /* SCROLLBAR */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: var(--bg-base); }
+    ::-webkit-scrollbar-thumb { background: var(--accent-primary); border-radius: 4px; }
+
+    /* LAYOUT */
+    #sidebar {
+      width: 260px;
+      background: rgba(15, 23, 42, 0.8);
+      backdrop-filter: blur(20px);
+      border-right: 1px solid rgba(255, 255, 255, 0.05);
+      padding: 24px 0;
+      display: flex;
+      flex-direction: column;
+      position: fixed;
+      height: 100vh;
+      transition: var(--transition);
+      z-index: 100;
+    }
+
+    #main-content {
+      margin-left: 260px;
+      flex: 1;
+      padding: 0;
+      position: relative;
+      transition: var(--transition);
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    /* SIDEBAR */
+    .brand {
+      padding: 0 24px 24px;
+      font-family: var(--font-display);
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--accent-primary);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      display: flex; align-items: center; gap: 12px;
+    }
+    
+    .nav-item {
+      padding: 12px 24px;
+      cursor: pointer;
+      display: flex; align-items: center; gap: 12px;
+      color: var(--text-muted);
+      transition: var(--transition);
+      position: relative;
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    .nav-item:hover, .nav-item.active {
+      color: var(--text-main);
+      background: var(--bg-card);
+    }
+
+    .nav-item.active::before {
+      content: '';
+      position: absolute; left: 0; top: 0; bottom: 0; width: 3px;
+      background: var(--accent-primary);
+      box-shadow: 0 0 10px var(--accent-primary);
+    }
+
+    .badge-premium {
+      background: linear-gradient(135deg, #8B5CF6, #D946EF);
+      padding: 2px 6px; border-radius: 4px; font-size: 10px; color: white; margin-left: auto;
+    }
+
+    /* HEADER */
+    header {
+      height: 70px;
+      backdrop-filter: blur(20px);
+      background: rgba(11, 17, 32, 0.8);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 32px;
+      position: sticky; top: 0; z-index: 50;
+    }
+
+    .header-right { display: flex; align-items: center; gap: 24px; }
+    
+    .bell { position: relative; cursor: pointer; font-size: 20px; }
+    .bell::after {
+      content: '3'; position: absolute; top: -5px; right: -8px;
+      background: var(--status-err); font-size: 10px; font-weight: bold;
+      width: 16px; height: 16px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    }
+
+    .avatar {
+      width: 36px; height: 36px; border-radius: 50%;
+      background: var(--bg-card); display: flex; align-items: center; justify-content: center;
+      border: 1px solid var(--accent-primary);
+    }
+
+    /* PAGE TRANSITION */
+    .page-section {
+      padding: 32px;
+      display: none;
+      animation: fadeUp 0.4s ease forwards;
+    }
+    .page-section.active { display: block; }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* COMPONENTS */
+    h1, h2, h3 { font-family: var(--font-display); font-weight: 600; }
+    h1 { font-size: 24px; margin-bottom: 24px; }
+    h2 { font-size: 18px; margin-bottom: 16px; }
+
+    .card {
+      background: var(--bg-card);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 16px;
+      padding: 24px;
+      transition: var(--transition);
+      position: relative;
+      overflow: hidden;
+    }
+    .card:hover {
+      transform: scale(1.015);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+      border-color: rgba(255, 255, 255, 0.1);
+    }
+
+    /* GRID LAYOUTS */
+    .grid-4 { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; }
+    .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 24px; }
+    
+    .stat-val { font-size: 32px; font-weight: 700; font-family: var(--font-display); margin: 8px 0; }
+    .stat-label { font-size: 14px; color: var(--text-muted); }
+
+    .btn {
+      padding: 10px 20px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255,255,255,0.1);
+      color: var(--text-main); border-radius: 8px; cursor: pointer; font-family: var(--font-body);
+      transition: var(--transition); display: inline-flex; align-items: center; gap: 8px; font-size: 14px;
+    }
+    .btn:hover { background: rgba(255, 255, 255, 0.1); transform: translateY(-2px); }
+    .btn.primary {
+      background: var(--accent-primary); color: #000; border: none; font-weight: 600;
+      box-shadow: 0 0 15px rgba(0, 212, 255, 0.3);
+    }
+    .btn.primary:hover { box-shadow: 0 0 25px rgba(0, 212, 255, 0.5); }
+
+    table { width: 100%; border-collapse: collapse; margin-top: 16px; }
+    th, td { padding: 12px 16px; text-align: left; border-bottom: 1px solid rgba(255,255,255,0.05); }
+    th { color: var(--text-muted); font-size: 13px; font-weight: 500; text-transform: uppercase; }
+    td { font-family: var(--font-mono); font-size: 14px; }
+    
+    .badge { padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: bold; background: rgba(255,255,255,0.1); }
+    .b-green { color: var(--status-ok); background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.2); }
+    .b-amber { color: var(--status-warn); background: rgba(255, 179, 71, 0.1); border: 1px solid rgba(255, 179, 71, 0.2); }
+    .b-red { color: var(--status-err); background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.2); }
+    .b-cyan { color: var(--accent-primary); background: var(--accent-glow); border: 1px solid rgba(0, 212, 255, 0.2); }
+
+    /* PROGRESS BARS */
+    .progress-track { height: 6px; background: rgba(255, 255, 255, 0.1); border-radius: 4px; overflow: hidden; margin-top: 8px;}
+    .progress-fill { height: 100%; width: 0; border-radius: 4px; transition: width 1s ease; }
+
+    /* CHARTS */
+    .bar-chart { display: flex; align-items: flex-end; gap: 16px; height: 150px; margin-top: 20px; }
+    .bar-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+    .bar { width: 100%; background: var(--accent-primary); border-radius: 4px 4px 0 0; transition: height 1.5s ease; height: 0; position: relative;}
+    
+    .tabs { display: flex; gap: 12px; border-bottom: 1px solid rgba(255, 255, 255, 0.1); margin-bottom: 24px; overflow-x: auto;}
+    .tab { padding: 12px 24px; cursor: pointer; color: var(--text-muted); border-bottom: 2px solid transparent; transition: var(--transition); }
+    .tab.active { color: var(--accent-primary); border-bottom-color: var(--accent-primary); font-weight: 600; }
+
+    /* ALERTS */
+    .alert-card { padding: 16px; border-radius: 8px; margin-bottom: 12px; display: flex; gap: 16px; align-items: start; border: 1px solid transparent; }
+    .alert-card.critical { background: rgba(239, 68, 68, 0.05); border-color: rgba(239, 68, 68, 0.2); }
+    .alert-card.warning { background: rgba(255, 179, 71, 0.05); border-color: rgba(255, 179, 71, 0.2); }
+    .alert-card.info { background: rgba(0, 212, 255, 0.05); border-color: rgba(0, 212, 255, 0.2); }
+    
+    /* MODAL */
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(5px); z-index: 1000; display: none; align-items: center; justify-content: center; }
+    .modal { background: var(--bg-base); padding: 32px; border-radius: 16px; width: 400px; border: 1px solid var(--accent-primary); position: relative;}
+    .modal.active { display: flex; animation: fadeUp 0.3s ease; }
+    .close-modal { position: absolute; right: 20px; top: 20px; cursor: pointer; font-size: 20px; color: var(--text-muted); }
+
+    /* TOAST */
+    .toast { position: fixed; bottom: 30px; right: 30px; background: var(--bg-card); padding: 16px 24px; border-radius: 8px; border-left: 4px solid var(--accent-primary); box-shadow: 0 10px 30px rgba(0,0,0,0.3); transform: translateX(150%); transition: 0.4s ease; z-index: 9999; }
+    .toast.show { transform: translateX(0); }
+
+    /* FORMS */
+    .input-grp { margin-bottom: 16px; }
+    .input-grp label { display: block; margin-bottom: 8px; font-size: 13px; color: var(--text-muted); }
+    .input-grp input, .input-grp select, .input-grp textarea { width: 100%; padding: 12px; border-radius: 8px; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.1); color: white; font-family: var(--font-body); outline: none; }
+    .input-grp input:focus, .input-grp select:focus, .input-grp textarea:focus { border-color: var(--accent-primary); }
+    
+    /* TOGGLE */
+    .toggle { position: relative; display: inline-block; width: 40px; height: 20px; }
+    .toggle input { opacity: 0; width: 0; height: 0; }
+    .slider { position: absolute; cursor: pointer; inset: 0; background-color: rgba(255,255,255,0.1); border-radius: 20px; transition: .4s; }
+    .slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 2px; bottom: 2px; background-color: white; border-radius: 50%; transition: .4s; }
+    input:checked + .slider { background-color: var(--accent-primary); }
+    input:checked + .slider:before { transform: translateX(20px); }
+
+    /* CHAT */
+    .chat-box { height: 400px; display: flex; flex-direction: column; }
+    .chat-history { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 16px; }
+    .msg { max-width: 70%; padding: 12px 16px; border-radius: 12px; font-size: 14px; line-height: 1.4; position: relative;}
+    .msg.incoming { background: rgba(255,255,255,0.05); align-self: flex-start; border-bottom-left-radius: 0;}
+    .msg.outgoing { background: var(--accent-glow); border: 1px solid rgba(0,212,255,0.2); align-self: flex-end; border-bottom-right-radius: 0; }
+    .msg-time { font-size: 10px; opacity: 0.5; margin-top: 6px; display: block; text-align: right; }
+    .chat-input { display: flex; gap: 12px; padding: 16px; border-top: 1px solid rgba(255,255,255,0.05); }
+
+    /* MOBILE RESPONSIVE */
+    @media(max-width: 768px) {
+      #sidebar { transform: translateX(-100%); }
+      #sidebar.open { transform: translateX(0); }
+      #main-content { margin-left: 0; }
+      .grid-4, .grid-2 { grid-template-columns: 1fr; }
+    }
+    
+    .hamburger { display: none; font-size: 24px; cursor: pointer; }
+    @media(max-width: 768px) { .hamburger { display: block; } }
+
+  </style>
+</head>
+<body>
+  <div class="bg-mesh"></div>
+
+  <!-- SIDEBAR -->
+  <aside id="sidebar">
+    <div class="brand">
+      <div style="width:30px;height:30px;background:var(--accent-primary);border-radius:8px;"></div>
+      ECAP ER<span style="color:#fff;">P</span>
+    </div>
+    <div class="nav-item active" data-target="dashboard">🏠 Dashboard</div>
+    <div class="nav-item" data-target="academic">📊 Academic Performance</div>
+    <div class="nav-item" data-target="attendance">📅 Attendance</div>
+    <div class="nav-item" data-target="messages">💬 Messages</div>
+    <div class="nav-item" data-target="fees">💰 Fees & Payments</div>
+    <div class="nav-item" data-target="assignments">📚 Assignments</div>
+    <div class="nav-item" data-target="alerts">🚨 Alerts & Notifications</div>
+    <div class="nav-item" data-target="behavior">📈 Behavior & Discipline</div>
+    <div class="nav-item" data-target="reports">🧾 Reports</div>
+    <div class="nav-item" data-target="settings">⚙️ Settings</div>
+    <div class="nav-item" data-target="security">🔐 Security</div>
+    <div class="nav-item" data-target="ai" style="margin-top:auto">🤖 AI Insights <span class="badge-premium">PREMIUM</span></div>
+  </aside>
+
+  <!-- MAIN -->
+  <main id="main-content">
+    <header>
+      <div style="display:flex; align-items:center; gap:16px;">
+        <div class="hamburger" onclick="document.getElementById('sidebar').classList.toggle('open')">☰</div>
+        <div style="font-family:var(--font-mono); font-size:14px; color:var(--text-muted)" id="breadcrumb">/ dashboard</div>
+      </div>
+      <div class="header-right">
+        <div class="bell" onclick="showPage('alerts')">🔔</div>
+        <div class="avatar" onclick="showPage('settings')">PA</div>
+      </div>
+    </header>
+
+    <!-- DASHBOARD -->
+    <section class="page-section active" id="page-dashboard">
+      <div class="card" style="margin-bottom: 24px; display: flex; align-items: center; gap: 24px; background: linear-gradient(135deg, rgba(15,23,42,0.8), rgba(0,212,255,0.05)); border: 1px solid rgba(0,212,255,0.2);">
+        <div style="width: 80px; height: 80px; border-radius: 50%; background: #fff; background-image: url('https://ui-avatars.com/api/?name=Aryan+Mehta&background=0D8ABC&color=fff&size=100'); background-size: cover; border: 2px solid var(--accent-primary);"></div>
+        <div>
+          <h1 style="margin:0; font-size: 28px;">Aryan Mehta</h1>
+          <p style="color:var(--text-muted); margin-top:8px; font-family:var(--font-mono);">Roll: CS-2021-047 | 3rd Year, Computer Science</p>
+        </div>
+        <div style="margin-left:auto; text-align:right;">
+          <div class="badge b-green" style="font-size:16px; padding:8px 16px; box-shadow: 0 0 15px rgba(16,185,129,0.3);">CGPA: 8.4/10</div>
+          <div style="margin-top:8px; font-size:12px; color:var(--text-muted);">Semester: 6th</div>
+        </div>
+      </div>
+
+      <div class="grid-4" style="margin-bottom: 24px;">
+        <div class="card">
+          <div class="stat-label">Overall Attendance</div>
+          <div class="stat-val" style="color: var(--status-warn);"><span class="counter" data-target="78">0</span>%</div>
+          <div class="progress-track"><div class="progress-fill" style="background:var(--status-warn);" data-width="78%"></div></div>
+        </div>
+        <div class="card">
+          <div class="stat-label">Assignments Done</div>
+          <div class="stat-val" style="color: var(--status-ok)"><span class="counter" data-target="24">0</span><span style="font-size:18px; color:var(--text-muted)">/30</span></div>
+          <div class="progress-track"><div class="progress-fill" style="background:var(--status-ok);" data-width="80%"></div></div>
+        </div>
+        <div class="card">
+          <div class="stat-label">Current CGPA</div>
+          <div class="stat-val" style="color: var(--accent-primary)"><span class="counter" data-target="8.4">0</span></div>
+          <div class="progress-track"><div class="progress-fill" style="background:var(--accent-primary);" data-width="84%"></div></div>
+        </div>
+        <div class="card" style="border-color: rgba(239, 68, 68, 0.3);">
+          <div class="stat-label">Pending Fees</div>
+          <div class="stat-val" style="color: var(--status-err)">₹<span class="counter" data-target="12500">0</span></div>
+          <div style="font-size:12px; color:var(--status-err); margin-top:8px;">Due Mar 31</div>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <!-- Attendance Overview -->
+        <div class="card">
+          <h2>Subject Attendance Overview</h2>
+          <div style="display:flex; flex-direction:column; gap:16px; margin-top:20px;">
+            <div>
+              <div style="display:flex; justify-content:space-between; font-size:13px; margin-bottom:4px;"><span>Mathematics</span><span>88%</span></div>
+              <div class="progress-track"><div class="progress-fill" style="background:var(--status-ok);" data-width="88%"></div></div>
+            </div>
+            <div>
+              <div style="display:flex; justify-content:space-between; font-size:13px; margin-bottom:4px; color:var(--status-err);"><span>Physics</span><span>65%</span></div>
+              <div class="progress-track"><div class="progress-fill" style="background:var(--status-err);" data-width="65%"></div></div>
+            </div>
+            <div>
+              <div style="display:flex; justify-content:space-between; font-size:13px; margin-bottom:4px;"><span>DBMS</span><span>92%</span></div>
+              <div class="progress-track"><div class="progress-fill" style="background:var(--status-ok);" data-width="92%"></div></div>
+            </div>
+            <div>
+              <div style="display:flex; justify-content:space-between; font-size:13px; margin-bottom:4px; color:var(--status-warn);"><span>OS</span><span>79%</span></div>
+              <div class="progress-track"><div class="progress-fill" style="background:var(--status-warn);" data-width="79%"></div></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Quick Alerts -->
+        <div class="card">
+          <h2>Priority Alerts</h2>
+          <div class="alert-card critical">
+            <div>🔴</div>
+            <div>
+              <div style="font-weight:bold; font-size:14px;">Physics attendance below 75%</div>
+              <div style="font-size:12px; color:var(--text-muted); margin-top:4px;">Take action immediately to avoid detention.</div>
+            </div>
+          </div>
+          <div class="alert-card critical">
+            <div>🔴</div>
+            <div>
+              <div style="font-weight:bold; font-size:14px;">Fee payment due</div>
+              <div style="font-size:12px; color:var(--text-muted); margin-top:4px;">₹12,500 due by March 31. <a href="#" onclick="showPage('fees')" style="color:var(--accent-primary)">Pay Now</a></div>
+            </div>
+          </div>
+          <div class="alert-card warning">
+            <div>🟡</div>
+            <div>
+              <div style="font-weight:bold; font-size:14px;">2 Assignments Drop This Week</div>
+              <div style="font-size:12px; color:var(--text-muted); margin-top:4px;">DBMS & OS Internal Lab records.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:24px;">
+        <h2>Quick Actions</h2>
+        <div style="display:flex; gap:16px; flex-wrap:wrap; margin-top:16px;">
+          <button class="btn" onclick="showPage('messages')">📩 Message Teacher</button>
+          <button class="btn" onclick="showPage('reports')">📥 Download Report</button>
+          <button class="btn primary" onclick="showPage('fees')">💳 Pay Fees</button>
+          <button class="btn" onclick="showPage('academic')">📊 View Analytics</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ACADEMIC -->
+    <section class="page-section" id="page-academic">
+      <h1>Academic Performance</h1>
+      <div class="tabs">
+        <div class="tab">Sem 1</div><div class="tab">Sem 2</div><div class="tab">Sem 3</div><div class="tab">Sem 4</div><div class="tab">Sem 5</div><div class="tab active">Sem 6</div>
+      </div>
+
+      <div class="card" style="margin-bottom:24px; border: 1px solid rgba(0,212,255,0.4); box-shadow: 0 0 20px rgba(0,212,255,0.1);">
+        <h3 style="color:var(--accent-primary); display:flex; align-items:center; gap:8px;">🤖 AI Performance Insight</h3>
+        <p style="margin-top:12px; font-size:14px; line-height:1.6;">
+          📉 Mathematics internal score dropped 18% vs last semester.<br/>
+          ✅ <b>DBMS</b> is the strongest subject — consistent top 3 rank in class.<br/>
+          ⚠️ Physics attendance + score correlation suggests risk. Recommend focus on internal assessments.
+        </p>
+      </div>
+
+      <div class="card" style="margin-bottom:24px;">
+        <h2>Subject-wise Marks (Mid-Sem)</h2>
+        <div style="overflow-x:auto;">
+          <table>
+            <tr><th>Subject</th><th>Internal (30)</th><th>Mid-Sem (20)</th><th>Total / 50</th><th>Grade</th><th>Trend</th></tr>
+            <tr><td>Mathematics</td><td>22</td><td>14</td><td>36</td><td><span class="badge b-amber">B</span></td><td>📉</td></tr>
+            <tr><td>Physics</td><td>18</td><td>10</td><td>28</td><td><span class="badge b-red">C</span></td><td>📉</td></tr>
+            <tr><td>DBMS</td><td>28</td><td>19</td><td>47</td><td><span class="badge b-green">O</span></td><td>📈</td></tr>
+            <tr><td>Operating Systems</td><td>24</td><td>16</td><td>40</td><td><span class="badge b-green">A</span></td><td>—</td></tr>
+            <tr><td>Data Structures</td><td>26</td><td>15</td><td>41</td><td><span class="badge b-green">A+</span></td><td>📈</td></tr>
+            <tr><td>English</td><td>20</td><td>15</td><td>35</td><td><span class="badge b-amber">B+</span></td><td>—</td></tr>
+          </table>
+        </div>
+      </div>
+      
+      <div class="card">
+        <h2>CGPA Trend</h2>
+        <div class="bar-chart">
+          <div class="bar-col"><div class="stat-label">7.2</div><div class="bar" data-height="72%" style="background:var(--text-muted)"></div><div class="stat-label">S1</div></div>
+          <div class="bar-col"><div class="stat-label">7.8</div><div class="bar" data-height="78%" style="background:var(--text-muted)"></div><div class="stat-label">S2</div></div>
+          <div class="bar-col"><div class="stat-label">8.0</div><div class="bar" data-height="80%" style="background:var(--text-muted)"></div><div class="stat-label">S3</div></div>
+          <div class="bar-col"><div class="stat-label">8.3</div><div class="bar" data-height="83%" style="background:var(--text-muted)"></div><div class="stat-label">S4</div></div>
+          <div class="bar-col"><div class="stat-label">8.1</div><div class="bar" data-height="81%" style="background:var(--text-muted)"></div><div class="stat-label">S5</div></div>
+          <div class="bar-col"><div class="stat-label">8.4</div><div class="bar" data-height="84%" style="background:var(--accent-primary); box-shadow:0 0 15px var(--accent-primary)"></div><div class="stat-label">S6</div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ATTENDANCE -->
+    <section class="page-section" id="page-attendance">
+      <h1>Attendance Center</h1>
+      <div class="card" style="background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.3); margin-bottom:24px;">
+        <h3 style="color:var(--status-err)">⚠️ Immediate Attention Required</h3>
+        <p style="margin-top:8px; font-size:14px;">Physics attendance is at <b>65%</b> (Below 75% threshold). Minimum <b>8 consecutive classes</b> needed to reach safe zone.</p>
+      </div>
+
+      <div class="grid-4" style="margin-bottom:24px">
+        <div class="card"><div class="stat-label">January</div><div class="stat-val">22/24 <span style="font-size:14px; color:var(--text-muted)">91%</span></div></div>
+        <div class="card"><div class="stat-label">February</div><div class="stat-val">18/22 <span style="font-size:14px; color:var(--text-muted)">81%</span></div></div>
+        <div class="card"><div class="stat-label">March (Current)</div><div class="stat-val" style="color:var(--status-err)">14/20 <span style="font-size:14px;">70%</span></div></div>
+      </div>
+
+      <div class="card">
+        <h2>Subject Breakdown</h2>
+        <table>
+          <tr><th>Subject</th><th>Classes</th><th>Present</th><th>Absent</th><th>%</th><th>Status</th></tr>
+          <tr><td>Mathematics</td><td>42</td><td>37</td><td>5</td><td>88%</td><td><span class="badge b-green">SAFE</span></td></tr>
+          <tr><td>Physics</td><td>40</td><td>26</td><td>14</td><td>65%</td><td><span class="badge b-red">CRITICAL</span></td></tr>
+          <tr><td>DBMS</td><td>38</td><td>35</td><td>3</td><td>92%</td><td><span class="badge b-green">SAFE</span></td></tr>
+          <tr><td>Operating Sys</td><td>35</td><td>27</td><td>8</td><td>77%</td><td><span class="badge b-amber">WARNING</span></td></tr>
+        </table>
+      </div>
+    </section>
+
+    <!-- MESSAGES -->
+    <section class="page-section" id="page-messages">
+      <h1>Messages & Communication</h1>
+      <div class="card" style="padding:0; display:flex; height:500px">
+        <div style="width:300px; border-right:1px solid rgba(255,255,255,0.1); display:flex; flex-direction:column;">
+          <div style="padding:20px; font-weight:bold; border-bottom:1px solid rgba(255,255,255,0.1)">Recent Chats</div>
+          <div style="padding:16px; background:rgba(0,212,255,0.05); border-left:3px solid var(--accent-primary); cursor:pointer;">
+            <div style="font-weight:bold; font-size:14px;">Prof. R. Sharma (Physics)</div>
+            <div style="font-size:12px; color:var(--text-muted); margin-top:4px;">Regarding attendance...</div>
+          </div>
+          <div style="padding:16px; cursor:pointer; border-bottom:1px solid rgba(255,255,255,0.05)">
+            <div style="font-weight:bold; font-size:14px;">Prof. K. Iyer (DBMS)</div>
+            <div style="font-size:12px; color:var(--text-muted); margin-top:4px;">Aryan is doing excellent.</div>
+          </div>
+        </div>
+        <div style="flex:1; display:flex; flex-direction:column; background:rgba(0,0,0,0.2)">
+          <div style="padding:20px; border-bottom:1px solid rgba(255,255,255,0.1); display:flex; justify-content:space-between; align-items:center;">
+            <div style="font-weight:bold;">Prof. R. Sharma <span style="font-size:12px; color:var(--text-muted); font-weight:normal">| Physics Dept</span></div>
+            <button class="btn" style="padding:6px 12px">Schedule Meet</button>
+          </div>
+          <div class="chat-history" id="chatHistory">
+            <div class="msg incoming">
+              Namaste. I am reaching out to inform you that Aryan has missed 4 consecutive Physics lab sessions. This is severely affecting his internal marks.
+              <span class="msg-time">Mar 25, 10:30 AM</span>
+            </div>
+            <div class="msg outgoing">
+              Good morning sir. I apologize. He was recovering from viral fever. I will ensure he attends regularly from Monday.
+              <span class="msg-time">Mar 25, 11:15 AM ✓✓</span>
+            </div>
+            <div class="msg incoming">
+              Thank you for the update. Please send the medical certificate so I can mark it as medical leave instead of absent.
+              <span class="msg-time">Mar 25, 11:30 AM</span>
+            </div>
+          </div>
+          <div class="chat-input">
+            <input type="text" id="chatInputMsg" placeholder="Type a message..." style="flex:1; padding:12px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:8px; color:#fff; outline:none;" onkeypress="if(event.key === 'Enter') sendChat()"/>
+            <button class="btn primary" onclick="sendChat()">Send</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- FEES -->
+    <section class="page-section" id="page-fees">
+      <div style="display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:24px;">
+        <h1>Fees & Payments</h1>
+        <div class="card" style="padding:16px 24px; border:1px solid rgba(239,68,68,0.5); background:rgba(239,68,68,0.1)">
+          <div class="stat-label">Total Outstanding</div>
+          <div class="stat-val" style="color:var(--status-err); margin:0;">₹12,500</div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom:24px;">
+        <h2>Current Academic Year Structure</h2>
+        <table>
+          <tr><th>Category</th><th>Amount</th><th>Due Date</th><th>Status</th><th>Action</th></tr>
+          <tr><td>Tuition Fee (Sem 6)</td><td>₹45,000</td><td>Jan 15, 2026</td><td><span class="badge b-green">Paid ✅</span></td><td>-</td></tr>
+          <tr><td>Hostel Fee</td><td>₹30,000</td><td>Feb 10, 2026</td><td><span class="badge b-green">Paid ✅</span></td><td>-</td></tr>
+          <tr><td>Exam Fee</td><td>₹1,500</td><td>Mar 31, 2026</td><td><span class="badge b-red">Due ⚠️</span></td><td><button class="btn primary" style="padding:4px 12px" onclick="openPaymentModal(1500)">Pay</button></td></tr>
+          <tr><td>Library Fine</td><td>₹11,000</td><td>Mar 31, 2026</td><td><span class="badge b-red">Due ⚠️</span></td><td><button class="btn primary" style="padding:4px 12px" onclick="openPaymentModal(11000)">Pay</button></td></tr>
+        </table>
+      </div>
+
+      <div class="card">
+        <h2>Payment History</h2>
+        <table>
+          <tr><th>Date</th><th>Description</th><th>Amount</th><th>Transaction ID</th><th>Receipt</th></tr>
+          <tr><td>Feb 05, 2026</td><td>Hostel Fee (Part 2)</td><td>₹30,000</td><td><span style="font-family:var(--font-mono)">TXN98273641</span></td><td><button class="btn" style="padding:4px 12px" onclick="showToast('Downloading Receipt...')">📥 PDF</button></td></tr>
+          <tr><td>Jan 10, 2026</td><td>Tuition Fee (Sem 6)</td><td>₹45,000</td><td><span style="font-family:var(--font-mono)">TXN98271022</span></td><td><button class="btn" style="padding:4px 12px" onclick="showToast('Downloading Receipt...')">📥 PDF</button></td></tr>
+        </table>
+      </div>
+    </section>
+
+    <!-- ASSIGNMENTS -->
+    <section class="page-section" id="page-assignments">
+      <h1>Assignments & Submissions</h1>
+      <div class="tabs">
+        <div class="tab active">Pending / Overdue</div><div class="tab">Submitted</div><div class="tab">All</div>
+      </div>
+      <div class="grid-2">
+        <div class="card" style="border-left:4px solid var(--status-err)">
+          <div style="display:flex; justify-content:space-between; margin-bottom:12px;">
+            <span class="badge b-red">OVERDUE (2 Days)</span>
+            <span style="color:var(--text-muted); font-size:12px;">Physics</span>
+          </div>
+          <h3>Lab Record Experiment #4</h3>
+          <p style="font-size:13px; color:var(--text-muted); margin-top:8px;">Upload scanned copy of observation table.</p>
+        </div>
+        <div class="card" style="border-left:4px solid var(--status-warn)">
+          <div style="display:flex; justify-content:space-between; margin-bottom:12px;">
+            <span class="badge b-amber">DUE TOMORROW</span>
+            <span style="color:var(--text-muted); font-size:12px;">DBMS</span>
+          </div>
+          <h3>SQL Queries Practice Set</h3>
+          <p style="font-size:13px; color:var(--text-muted); margin-top:8px;">Execute and submit screenshots of output.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- SETTINGS -->
+    <section class="page-section" id="page-settings">
+      <h1>Settings & Profile</h1>
+      <div class="grid-2">
+        <div class="card">
+          <h2>Parent Profile Overview</h2>
+          <div style="display:flex; gap:20px; align-items:center; margin-top:20px;">
+            <div class="avatar" style="width:80px; height:80px; font-size:32px;">NR</div>
+            <div>
+              <h3>Nitin Mehta</h3>
+              <p style="color:var(--text-muted); font-size:14px; margin-top:4px;">Father of Aryan Mehta</p>
+              <p style="color:var(--text-muted); font-size:14px; font-family:var(--font-mono); margin-top:4px;">+91 98765 43210</p>
+            </div>
+          </div>
+          <button class="btn" style="margin-top:24px; width:100%; justify-content:center;">Edit Information</button>
+        </div>
+        <div class="card">
+          <h2>Notification Preferences</h2>
+          <div style="margin-top:20px; display:flex; flex-direction:column; gap:16px;">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <div>
+                <div style="font-weight:bold; font-size:14px;">SMS Alerts</div>
+                <div style="font-size:12px; color:var(--text-muted);">Receive attendance and fee notices via SMS</div>
+              </div>
+              <label class="toggle"><input type="checkbox" checked><span class="slider"></span></label>
+            </div>
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <div>
+                <div style="font-weight:bold; font-size:14px;">Email Reports</div>
+                <div style="font-size:12px; color:var(--text-muted);">Weekly performance summary emails</div>
+              </div>
+              <label class="toggle"><input type="checkbox" checked><span class="slider"></span></label>
+            </div>
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <div>
+                <div style="font-weight:bold; font-size:14px;">Push Notifications</div>
+                <div style="font-size:12px; color:var(--text-muted);">Real-time alerts in browser and app</div>
+              </div>
+              <label class="toggle"><input type="checkbox" checked><span class="slider"></span></label>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="card" style="margin-top:24px;">
+        <h2>Theme Preference</h2>
+        <div style="display:flex; gap:16px; margin-top:16px;">
+          <button class="btn primary" onclick="document.body.classList.remove('light-theme')">Dark Theme (Default)</button>
+          <button class="btn" onclick="document.body.classList.add('light-theme'); this.style.color='#000'">Light Theme</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- OTHER PAGES PLACEHOLDERS for functional completeness -->
+    <section class="page-section" id="page-alerts"><h1>Alerts Center</h1><p>See dashboard for latest alerts.</p></section>
+    <section class="page-section" id="page-behavior"><h1>Behavior & Discipline</h1><div class="card"><div style="text-align:center; padding:40px;"><div style="font-size:60px; color:var(--status-ok)">72/100</div><div class="stat-label">Engagement Score</div><p style="margin-top:20px; color:var(--text-muted)">Student behavior is satisfactory. No disciplinary actions recorded.</p></div></div></section>
+    <section class="page-section" id="page-reports"><h1>Reports & Downloads</h1><div class="grid-4"><div class="card" style="text-align:center"><div style="font-size:40px; margin-bottom:16px;">📄</div><h3>Attendance Ledger</h3><button class="btn primary" style="margin-top:16px;" onclick="showToast('Downloading...')">Download PDF</button></div><div class="card" style="text-align:center"><div style="font-size:40px; margin-bottom:16px;">🎓</div><h3>Sem 5 Grade Card</h3><button class="btn primary" style="margin-top:16px;" onclick="showToast('Downloading...')">Download PDF</button></div></div></section>
+    <section class="page-section" id="page-security"><h1>Security Settings</h1><div class="card"><h2>Change Password</h2><div class="input-grp" style="max-width:400px; margin-top:20px;"><input type="password" placeholder="Current Password"></div><div class="input-grp" style="max-width:400px;"><input type="password" placeholder="New Password"></div><button class="btn primary">Update Password</button></div></section>
+    <section class="page-section" id="page-ai">
+      <h1 style="display:flex; align-items:center; gap:12px;">CerebroGate AI Insights <span class="badge-premium">ACTIVE</span></h1>
+      <div class="grid-2">
+        <div class="card" style="border: 1px solid rgba(139, 92, 246, 0.4); background: linear-gradient(135deg, rgba(15,23,42,0.8), rgba(139, 92, 246, 0.05));">
+          <h2 style="color:#C4B5FD">🔮 Trajectory Predictor</h2>
+          <p style="color:var(--text-muted); line-height:1.6; margin-top:12px;">Based on current mid-sem marks and historical curves, we project a <b>Sem 6 SGPA of 8.6</b>. Key variable: Physics external exam needs a minimum score of 35/50 to maintain this trajectory.</p>
+        </div>
+        <div class="card" style="border: 1px solid rgba(16, 185, 129, 0.4);">
+          <h2 style="color:var(--status-ok)">🏆 Strength Discovery</h2>
+          <p style="color:var(--text-muted); line-height:1.6; margin-top:12px;">Aryan demonstrates a 98th percentile aptitude in <b>Database Systems (DBMS)</b> compared to his batch. Recommend enrolling in the Advanced Cloud Architecture elective next semester.</p>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- MODALS & TOASTS -->
+  <div class="modal-overlay" id="paymentModal">
+    <div class="modal" id="pModal">
+      <div class="close-modal" onclick="closeModal()">×</div>
+      <h2 style="margin-bottom:8px;">Quick Payment</h2>
+      <p style="color:var(--text-muted); font-size:13px; margin-bottom:24px;">Secure gateway integration</p>
+      <div style="font-size:32px; font-family:var(--font-mono); text-align:center; margin-bottom:24px; color:var(--accent-primary)">₹<span id="payAmount">0</span></div>
+      <div class="input-grp">
+        <label>Payment Method</label>
+        <select>
+          <option>UPI ID / QR Code</option>
+          <option>Credit/Debit Card</option>
+          <option>Net Banking</option>
+        </select>
+      </div>
+      <button class="btn primary" style="width:100%; justify-content:center; padding:14px; font-size:16px;" onclick="processPayment()">Proceed to Pay</button>
+    </div>
+  </div>
+
+  <div class="toast" id="toastMsg">Action successful!</div>
+
+  <script>
+    // Navigation Logic
+    const navItems = document.querySelectorAll('.nav-item');
+    const sections = document.querySelectorAll('.page-section');
+    const breadcrumb = document.getElementById('breadcrumb');
+
+    navItems.forEach(item => {
+      item.addEventListener('click', () => {
+        const target = item.getAttribute('data-target');
+        if(!target) return;
+        showPage(target);
+      });
+    });
+
+    function showPage(targetId) {
+      if(window.innerWidth <= 768) {
+        document.getElementById('sidebar').classList.remove('open');
+      }
+
+      navItems.forEach(nav => {
+        if(nav.getAttribute('data-target') === targetId) nav.classList.add('active');
+        else nav.classList.remove('active');
+      });
+
+      sections.forEach(sec => {
+        sec.classList.remove('active');
+        sec.style.display = 'none'; // reset animation
+        if(sec.id === 'page-' + targetId) {
+          sec.style.display = 'block';
+          // trigger layout reflow to restart animation
+          void sec.offsetWidth;
+          sec.classList.add('active');
+          breadcrumb.innerText = '/ ' + targetId;
+          
+          // Trigger animations logic in the new page
+          triggerPageAnimations(sec);
+        }
+      });
+      window.scrollTo(0,0);
+    }
+
+    // Modal Logic
+    function openPaymentModal(amount) {
+      document.getElementById('payAmount').innerText = amount.toLocaleString('en-IN');
+      document.getElementById('paymentModal').style.display = 'flex';
+      setTimeout(() => document.getElementById('pModal').classList.add('active'), 10);
+    }
+    
+    function closeModal() {
+      document.getElementById('pModal').classList.remove('active');
+      setTimeout(() => document.getElementById('paymentModal').style.display = 'none', 300);
+    }
+    
+    function processPayment() {
+      closeModal();
+      showToast('Payment processed successfully. Receipt sent to email.');
+    }
+
+    // Toast Logic
+    function showToast(msg) {
+      const toast = document.getElementById('toastMsg');
+      toast.innerText = msg;
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 3000);
+    }
+
+    // Chat Logic
+    function sendChat() {
+      const input = document.getElementById('chatInputMsg');
+      const text = input.value.trim();
+      if(!text) return;
+      
+      const history = document.getElementById('chatHistory');
+      const timeStr = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+      
+      history.innerHTML += `<div class="msg outgoing">
+        ${text}
+        <span class="msg-time">Today, ${timeStr} ✓</span>
+      </div>`;
+      
+      input.value = '';
+      history.scrollTop = history.scrollHeight;
+
+      // Auto reply mock after 2s
+      setTimeout(() => {
+        history.innerHTML += `<div class="msg incoming">
+          Received. I will look into it and get back to you shortly.
+          <span class="msg-time">Today, ${timeStr}</span>
+        </div>`;
+        history.scrollTop = history.scrollHeight;
+      }, 2000);
+    }
+
+    // Animations logic
+    function triggerPageAnimations(container) {
+      // Counter Animation
+      const counters = container.querySelectorAll('.counter');
+      counters.forEach(counter => {
+        counter.innerText = '0';
+        const target = parseFloat(counter.getAttribute('data-target'));
+        const duration = 1500; // ms
+        const start = performance.now();
+        
+        function update(currentTime) {
+          const elapsed = currentTime - start;
+          const progress = Math.min(elapsed / duration, 1);
+          const easeOut = 1 - Math.pow(1 - progress, 4);
+          
+          let currentVal = easeOut * target;
+          if (target % 1 !== 0) {
+            counter.innerText = currentVal.toFixed(1);
+          } else {
+            counter.innerText = Math.floor(currentVal);
+          }
+          
+          if (progress < 1) {
+            requestAnimationFrame(update);
+          } else {
+            counter.innerText = target;
+          }
+        }
+        requestAnimationFrame(update);
+      });
+
+      // Progress bars
+      const bars = container.querySelectorAll('.progress-fill');
+      bars.forEach(bar => {
+        bar.style.width = '0';
+        setTimeout(() => {
+          bar.style.width = bar.getAttribute('data-width');
+        }, 100);
+      });
+
+      // Charts
+      const chartBars = container.querySelectorAll('.bar');
+      chartBars.forEach(bar => {
+        bar.style.height = '0';
+        setTimeout(() => {
+          bar.style.height = bar.getAttribute('data-height');
+        }, 300);
+      });
+    }
+
+    // Init first page animations
+    window.addEventListener('DOMContentLoaded', () => {
+      triggerPageAnimations(document.getElementById('page-dashboard'));
+    });
+
+  </script>
+</body>
+</html>

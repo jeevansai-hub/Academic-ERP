@@ -7,7 +7,7 @@ interface UserProfile {
   uid: string;
   name: string;
   email: string;
-  role: 'student' | 'faculty' | 'admin';
+  role: 'student' | 'faculty' | 'admin' | 'parent';
   rollNo?: string | null;
   branch?: string | null;
   semester?: number | null;
@@ -65,16 +65,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         };
         setUserProfile(initialProfile);
 
-        // 2. Fetch the real profile from Firestore in the background (Don't await it!)
+        // 2. Fetch the real profile from Firestore in the background
         const docRef = doc(db, 'users', user.uid);
         getDoc(docRef).then((docSnap) => {
           if (docSnap.exists()) {
-            setUserProfile(docSnap.data() as UserProfile);
+            const data = docSnap.data();
+            // Critical Fix: Always favor the dev role if set and valid
+            const devRole = localStorage.getItem('ecap_dev_role');
+            const finalRole = (devRole && devRole !== 'student') ? devRole : (data.role || 'student');
+            
+            setUserProfile({ ...data, role: finalRole } as UserProfile);
           } else {
             setDoc(docRef, initialProfile).catch(() => {});
           }
         }).catch((err) => {
-          console.warn("Background profile sync skipped (offline):", err);
+          console.warn("Background profile sync skipped:", err);
         });
       } else {
         setUserProfile(null);

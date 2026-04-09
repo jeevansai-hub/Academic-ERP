@@ -50,3 +50,10 @@ app.post('/api/remarks', verifyToken, checkRole(['faculty']), remarksController.
 app.get('/api/analytics/summary', verifyToken, checkRole(['admin']), analyticsController.summary);
 
 export const api = functions.https.onRequest(app);
+
+// Parent Portal Functions
+export { 
+  onMarksUpdate, 
+  onAttendanceUpdate, 
+  onAnnouncementCreate 
+} from './parentNotifications';
